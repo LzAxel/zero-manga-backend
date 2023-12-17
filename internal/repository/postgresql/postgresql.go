@@ -25,16 +25,11 @@ type Config struct {
 
 type PostgresqlRepository struct {
 	DB DB
+	db *sqlx.DB
 }
 
 func New(ctx context.Context, config Config) (PostgresqlRepository, error) {
-	db, err := sqlx.Open("pgx",
-		fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
-			config.Host,
-			config.Port,
-			config.User,
-			config.Database,
-			config.Password))
+	db, err := sqlx.Open("pgx", formatConnectionUrl(config))
 	if err != nil {
 		return PostgresqlRepository{}, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -43,5 +38,16 @@ func New(ctx context.Context, config Config) (PostgresqlRepository, error) {
 	}
 	return PostgresqlRepository{
 		DB: db,
+		db: db,
 	}, nil
+}
+
+func formatConnectionUrl(config Config) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Database,
+	)
 }

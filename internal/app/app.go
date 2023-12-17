@@ -26,7 +26,12 @@ func New(config config.Config) *App {
 	logger.Infof("connecting to postgresql on %s:%d", config.Postgresql.Host, config.Postgresql.Port)
 	psql, err := postgresql.New(ctx, config.Postgresql)
 	if err != nil {
-		panic(err)
+		logger.Fatalf("failed to connect to postgresql: %s", err)
+	}
+
+	err = postgresql.Migrate(ctx, config.Postgresql)
+	if err != nil {
+		logger.Fatalf("failed to migrate database: %s", err)
 	}
 	repository := repository.New(ctx, psql, logger)
 	services := service.New(ctx, repository)
