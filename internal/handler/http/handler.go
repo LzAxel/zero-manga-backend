@@ -7,6 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	middle "github.com/lzaxel/zero-manga-backend/internal/handler/http/middleware"
+	"github.com/lzaxel/zero-manga-backend/internal/handler/http/validator"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
 	"github.com/lzaxel/zero-manga-backend/internal/service"
 )
@@ -40,9 +42,11 @@ func New(config Config, services *service.Services, logger logger.Logger) *Handl
 
 func (h *Handler) initMiddlewares() {
 	h.server.Use(
-		middleware.Logger(),
+		middleware.RequestID(),
 		middleware.Recover(),
+		middle.Logger(h.logger),
 	)
+	h.server.Validator = validator.New()
 }
 
 func (h *Handler) initRoutes() {
