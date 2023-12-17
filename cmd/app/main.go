@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"github.com/lzaxel/zero-manga-backend/internal/app"
+	"github.com/lzaxel/zero-manga-backend/internal/config"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	cfg := config.ReadConfig()
+
+	app := app.New(cfg)
+
+	app.Start()
 }
