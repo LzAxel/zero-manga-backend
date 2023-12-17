@@ -29,18 +29,17 @@ func Logger(logger logger.Logger) echo.MiddlewareFunc {
 				reqSize = "0"
 			}
 
-			logger.Debugf("REQUEST %s %s [%v] %s %-7s %s %3d %13v %s %s",
-				id,
-				c.RealIP(),
-				stop.Format(time.RFC3339),
-				req.Host,
-				req.Method,
-				req.RequestURI,
-				res.Status,
-				stop.Sub(start).String(),
-				req.Referer(),
-				req.UserAgent(),
-			)
+			logger.Debug("request", map[string]interface{}{
+				"request_id":   id,
+				"method":       req.Method,
+				"uri":          req.RequestURI,
+				"status":       res.Status,
+				"ip":           c.RealIP(),
+				"request_size": reqSize,
+				"duration":     stop.Sub(start).String(),
+				"referer":      req.Referer(),
+				"user_agent":   req.UserAgent(),
+			})
 			return err
 		}
 	}
