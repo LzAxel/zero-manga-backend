@@ -13,8 +13,9 @@ const (
 )
 
 type AppConfig struct {
-	IsDev    bool   `yaml:"isDev" env:"IS_DEV"`
-	LogLevel string `yaml:"logLevel" env:"LOG_LEVEL"`
+	IsDev     bool   `yaml:"isDev" env:"IS_DEV"`
+	IsTesting bool   `yaml:"isTesting" env:"IS_TESTING"`
+	LogLevel  string `yaml:"logLevel" env:"LOG_LEVEL"`
 }
 
 type Config struct {

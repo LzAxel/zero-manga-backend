@@ -9,6 +9,8 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
 	"github.com/lzaxel/zero-manga-backend/internal/service"
+	"github.com/lzaxel/zero-manga-backend/pkg/clock"
+	"github.com/lzaxel/zero-manga-backend/pkg/uuid"
 )
 
 type App struct {
@@ -23,6 +25,12 @@ func New(config config.Config) *App {
 	logger := logger.NewLogrusLogger(config.App.LogLevel, config.App.IsDev)
 
 	logger.Infof("config loaded")
+
+	if config.App.IsTesting {
+		clock.InitClock(true)
+		uuid.InitUUID(true)
+	}
+
 	logger.Infof("connecting to postgresql on %s:%d", config.Postgresql.Host, config.Postgresql.Port)
 	psql, err := postgresql.New(ctx, config.Postgresql)
 	if err != nil {
