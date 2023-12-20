@@ -3,13 +3,16 @@ package service
 import (
 	"context"
 
+	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
 	"github.com/lzaxel/zero-manga-backend/internal/service/chapter"
 	"github.com/lzaxel/zero-manga-backend/internal/service/manga"
 	"github.com/lzaxel/zero-manga-backend/internal/service/user"
 )
 
-type User interface{}
+type User interface {
+	Create(ctx context.Context, user models.CreateUserInput) error
+}
 
 type Manga interface{}
 

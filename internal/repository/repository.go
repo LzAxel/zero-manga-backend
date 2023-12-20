@@ -4,13 +4,16 @@ import (
 	"context"
 
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
+	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/chapter"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/manga"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/user"
 )
 
-type User interface{}
+type User interface {
+	Create(ctx context.Context, user models.CreateUserRecord) error
+}
 
 type Manga interface{}
 

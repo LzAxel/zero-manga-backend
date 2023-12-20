@@ -1,5 +1,6 @@
 app:
   isDev: true
+  isTesting: false
   logLevel: debug
 postgres:
   host: localhost

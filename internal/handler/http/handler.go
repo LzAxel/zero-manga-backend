@@ -7,10 +7,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	_ "github.com/lzaxel/zero-manga-backend/docs"
 	middle "github.com/lzaxel/zero-manga-backend/internal/handler/http/middleware"
 	"github.com/lzaxel/zero-manga-backend/internal/handler/http/validator"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
 	"github.com/lzaxel/zero-manga-backend/internal/service"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Config struct {
@@ -56,10 +58,11 @@ func (h *Handler) initRoutes() {
 	v1.GET("/ping", func(c echo.Context) error {
 		return c.String(200, "pong")
 	})
+	v1.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	v1.Group("/auth")
+	auth := v1.Group("/auth")
 	{
-
+		auth.POST("/sign-up", h.signUp)
 	}
 
 	v1.Group("/user")

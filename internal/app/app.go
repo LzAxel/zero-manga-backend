@@ -23,7 +23,6 @@ type App struct {
 func New(config config.Config) *App {
 	ctx := context.Background()
 	logger := logger.NewLogrusLogger(config.App.LogLevel, config.App.IsDev)
-
 	logger.Infof("config loaded")
 
 	if config.App.IsTesting {
@@ -34,12 +33,12 @@ func New(config config.Config) *App {
 	logger.Infof("connecting to postgresql on %s:%d", config.Postgresql.Host, config.Postgresql.Port)
 	psql, err := postgresql.New(ctx, config.Postgresql)
 	if err != nil {
-		logger.Fatalf("failed to connect to postgresql: %s", err)
+		logger.Fatalf("connect to postgresql: %s", err)
 	}
 
 	err = postgresql.Migrate(ctx, config.Postgresql)
 	if err != nil {
-		logger.Fatalf("failed to migrate database: %s", err)
+		logger.Warnf("migrate database: %s", err)
 	}
 	repository := repository.New(ctx, psql, logger)
 	services := service.New(ctx, repository)

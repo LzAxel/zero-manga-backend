@@ -9,10 +9,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	UsersTable   = "users"
+	MangaTable   = "manga"
+	ChapterTable = "chapter"
+)
+
 type DB interface {
-	Exec(query string, args ...any) (sql.Result, error)
-	Select(dest interface{}, query string, args ...interface{}) error
-	Get(dest interface{}, query string, args ...interface{}) error
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
 type Config struct {
