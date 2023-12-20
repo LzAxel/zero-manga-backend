@@ -1,0 +1,60 @@
+basePath: /api/v1
+definitions:
+  http.signUpRequest:
+    properties:
+      bio:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      gender:
+        description: |-
+          Gender type
+          * 1 - Male
+          * 2 - Female
+        enum:
+        - 1
+        - 2
+        type: integer
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - gender
+    - password
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is an API for ZeroManga.
+  title: ZeroManga API
+  version: "0.1"
+paths:
+  /sign-up:
+    post:
+      consumes:
+      - application/json
+      description: create user
+      parameters:
+      - description: user data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.signUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      summary: Create an account
+      tags:
+      - auth
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
