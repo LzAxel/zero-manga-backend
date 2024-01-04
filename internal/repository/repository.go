@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
@@ -13,6 +14,9 @@ import (
 
 type User interface {
 	Create(ctx context.Context, user models.CreateUserRecord) error
+	GetByID(ctx context.Context, id uuid.UUID) (models.User, error)
+	GetByUsername(ctx context.Context, username string) (models.User, error)
+	GetByEmail(ctx context.Context, email string) (models.User, error)
 }
 
 type Manga interface{}

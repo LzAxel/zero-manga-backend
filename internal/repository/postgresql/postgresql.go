@@ -3,10 +3,13 @@ package postgresql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/lzaxel/zero-manga-backend/internal/apperror"
 )
 
 const (
@@ -14,6 +17,22 @@ const (
 	MangaTable   = "manga"
 	ChapterTable = "chapter"
 )
+
+func HandleDBError(err error) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		return apperror.ErrNotFound
+	}
+
+	return err
+}
+func GetPgError(err error) *pgconn.PgError {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr
+	}
+
+	return nil
+}
 
 type DB interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/lzaxel/zero-manga-backend/internal/handler/http"
+	"github.com/lzaxel/zero-manga-backend/internal/jwt"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
 )
 
@@ -22,6 +23,7 @@ type Config struct {
 	Postgresql postgresql.Config `yaml:"postgres"`
 	Server     http.Config       `yaml:"server"`
 	App        AppConfig         `yaml:"app"`
+	JWT        jwt.Config        `yaml:"jwt"`
 }
 
 var (

@@ -5,6 +5,7 @@ import (
 
 	"github.com/lzaxel/zero-manga-backend/internal/config"
 	"github.com/lzaxel/zero-manga-backend/internal/handler/http"
+	"github.com/lzaxel/zero-manga-backend/internal/jwt"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
@@ -40,9 +41,10 @@ func New(config config.Config) *App {
 	if err != nil {
 		logger.Warnf("migrate database: %s", err)
 	}
+	jwt := jwt.New(config.JWT)
 	repository := repository.New(ctx, psql, logger)
-	services := service.New(ctx, repository)
-	handler := http.New(config.Server, services, logger)
+	services := service.New(ctx, repository, jwt)
+	handler := http.New(config.Server, services, logger, jwt)
 
 	return &App{
 		services:   services,

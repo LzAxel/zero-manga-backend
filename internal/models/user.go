@@ -2,24 +2,12 @@ package models
 
 import (
 	"errors"
-	"strings"
 	"time"
 
+	val "github.com/lzaxel/zero-manga-backend/internal/validation"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-)
-
-const (
-	usernameMinLength = 4
-	passwordMinLength = 8
-)
-
-var (
-	ErrInvalidGender   = errors.New("invalid gender")
-	ErrPasswordShort   = errors.New("password is too short")
-	ErrPasswordLong    = errors.New("password is too long")
-	ErrInvalidPassword = errors.New("password contains invalid characters")
-	ErrUsernameShort   = errors.New("username is too short")
-	ErrUsernameLong    = errors.New("username is too long")
 )
 
 type UserType uint8
@@ -38,18 +26,22 @@ const (
 	GenderTypeFemale
 )
 
+var (
+	ErrUsernameEmailExists = errors.New("Username or email already taken")
+)
+
 type User struct {
-	ID           uuid.UUID
-	Username     string
-	DisplayName  string
-	Bio          string
-	Email        string
-	Gender       GenderType
-	Type         UserType
-	AvatarID     uuid.UUID
-	PasswordHash []byte
-	OnlineAt     time.Time
-	RegisteredAt time.Time
+	ID           uuid.UUID  `db:"id"`
+	Username     string     `db:"username"`
+	DisplayName  string     `db:"display_name"`
+	Bio          string     `db:"bio"`
+	Email        string     `db:"email"`
+	Gender       GenderType `db:"gender"`
+	Type         UserType   `db:"type"`
+	AvatarID     uuid.UUID  `db:"avatar_id"`
+	PasswordHash []byte     `db:"password_hash"`
+	OnlineAt     time.Time  `db:"online_at"`
+	RegisteredAt time.Time  `db:"registered_at"`
 }
 
 type CreateUserInput struct {
@@ -66,29 +58,32 @@ func NewCreateUserInput(
 	displayName *string,
 	email string,
 	password string,
-	gender GenderType,
+	gender uint8,
 	bio *string,
 ) (CreateUserInput, error) {
-	if gender != GenderTypeMale && gender != GenderTypeFemale {
-		return CreateUserInput{}, ErrInvalidGender
-	}
-	if len(username) < usernameMinLength {
-		return CreateUserInput{}, ErrUsernameShort
-	}
-	if len(password) < passwordMinLength {
-		return CreateUserInput{}, ErrPasswordShort
-	}
-	if strings.ContainsAny(password, "\"'()+,-./:;<=>?[\\]_`{|}~") {
-		return CreateUserInput{}, ErrInvalidPassword
-	}
-	return CreateUserInput{
+	input := CreateUserInput{
 		Username:    username,
 		DisplayName: displayName,
 		Email:       email,
 		Password:    password,
-		Gender:      gender,
+		Gender:      GenderType(gender),
 		Bio:         bio,
-	}, nil
+	}
+
+	return input, input.Validate()
+}
+
+func (input CreateUserInput) Validate() error {
+	return validation.ValidateStruct(&input,
+		validation.Field(&input.Username, val.UsernameRules...),
+		validation.Field(&input.DisplayName, validation.Length(0, 32)),
+		validation.Field(&input.Email, val.EmailRules...),
+		validation.Field(&input.Password, val.PasswordRules...),
+		validation.Field(&input.Gender, validation.In(
+			GenderType(GenderTypeMale), GenderType(GenderTypeFemale),
+		)),
+		validation.Field(&input.Bio, validation.Length(0, 300)),
+	)
 }
 
 type CreateUserRecord struct {

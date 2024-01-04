@@ -11,6 +11,10 @@ const (
 	saltLength = 8
 )
 
+var (
+	ErrInvalidPassword = fmt.Errorf("invalid password")
+)
+
 func Compare(hashedPassword []byte, password string) error {
 	salt := hashedPassword[:saltLength]
 
@@ -19,7 +23,7 @@ func Compare(hashedPassword []byte, password string) error {
 
 	err := bcrypt.CompareHashAndPassword(hashedPassword[saltLength:], []byte(pass))
 	if err != nil {
-		return err
+		return ErrInvalidPassword
 	}
 
 	return nil

@@ -7,12 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	_ "github.com/lzaxel/zero-manga-backend/docs"
 	middle "github.com/lzaxel/zero-manga-backend/internal/handler/http/middleware"
-	"github.com/lzaxel/zero-manga-backend/internal/handler/http/validator"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
 	"github.com/lzaxel/zero-manga-backend/internal/service"
-	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Config struct {
@@ -20,21 +17,23 @@ type Config struct {
 	Port uint   `yaml:"port" env:"PORT"`
 }
 type Handler struct {
-	services *service.Services
-	server   *echo.Echo
-	config   Config
-	logger   logger.Logger
+	jwtValidator JWTValidator
+	services     *service.Services
+	server       *echo.Echo
+	config       Config
+	logger       logger.Logger
 }
 
-func New(config Config, services *service.Services, logger logger.Logger) *Handler {
+func New(config Config, services *service.Services, logger logger.Logger, jwtValidator JWTValidator) *Handler {
 	echo := echo.New()
 	echo.HideBanner = true
 	echo.HidePort = true
 	handler := Handler{
-		server:   echo,
-		config:   config,
-		services: services,
-		logger:   logger,
+		server:       echo,
+		config:       config,
+		services:     services,
+		logger:       logger,
+		jwtValidator: jwtValidator,
 	}
 	handler.initMiddlewares()
 	handler.initRoutes()
@@ -48,7 +47,6 @@ func (h *Handler) initMiddlewares() {
 		middleware.Recover(),
 		middle.Logger(h.logger),
 	)
-	h.server.Validator = validator.New()
 }
 
 func (h *Handler) initRoutes() {
@@ -58,11 +56,11 @@ func (h *Handler) initRoutes() {
 	v1.GET("/ping", func(c echo.Context) error {
 		return c.String(200, "pong")
 	})
-	v1.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/sign-up", h.signUp)
+		auth.POST("/sign-in", h.signIn)
 	}
 
 	v1.Group("/user")

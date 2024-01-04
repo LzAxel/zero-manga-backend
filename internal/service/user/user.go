@@ -3,11 +3,9 @@ package user
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
-	"github.com/lzaxel/zero-manga-backend/pkg/clock"
-	"github.com/lzaxel/zero-manga-backend/pkg/hash"
-	"github.com/lzaxel/zero-manga-backend/pkg/uuid"
 )
 
 type User struct {
@@ -20,23 +18,12 @@ func New(ctx context.Context, repository repository.User) *User {
 	}
 }
 
-func (u *User) Create(ctx context.Context, user models.CreateUserInput) error {
-	passwordHash, err := hash.Hash(user.Password)
-	if err != nil {
-		return err
-	}
-	dto := models.CreateUserRecord{
-		ID:           uuid.New(),
-		Username:     user.Username,
-		DisplayName:  user.DisplayName,
-		Email:        user.Email,
-		PasswordHash: passwordHash,
-		Gender:       int(user.Gender),
-		Bio:          user.Bio,
-		Type:         models.UserTypeReader,
-		OnlineAt:     clock.Now(),
-		RegisteredAt: clock.Now(),
-	}
-
-	return u.repo.Create(ctx, dto)
+func (u *User) GetByID(ctx context.Context, id uuid.UUID) (models.User, error) {
+	return u.repo.GetByID(ctx, id)
+}
+func (u *User) GetByUsername(ctx context.Context, username string) (models.User, error) {
+	return u.repo.GetByUsername(ctx, username)
+}
+func (u *User) GetByEmail(ctx context.Context, email string) (models.User, error) {
+	return u.repo.GetByEmail(ctx, email)
 }
