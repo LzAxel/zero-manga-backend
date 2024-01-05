@@ -38,30 +38,18 @@ type UserFilters struct {
 	Gender       []uint8    `query:"gender"`
 }
 
-type GetUserOutput struct {
-	ID           uuid.UUID  `db:"id"`
-	Username     string     `db:"username"`
-	DisplayName  string     `db:"display_name"`
-	Bio          string     `db:"bio"`
-	Gender       GenderType `db:"gender"`
-	Type         UserType   `db:"type"`
-	AvatarID     uuid.UUID  `db:"avatar_id"`
-	OnlineAt     time.Time  `db:"online_at"`
-	RegisteredAt time.Time  `db:"registered_at"`
-}
-
 type User struct {
-	ID           uuid.UUID  `db:"id"`
-	Username     string     `db:"username"`
-	DisplayName  string     `db:"display_name"`
-	Bio          string     `db:"bio"`
-	Email        string     `db:"email"`
-	Gender       GenderType `db:"gender"`
-	Type         UserType   `db:"type"`
-	AvatarID     uuid.UUID  `db:"avatar_id"`
-	PasswordHash []byte     `db:"password_hash"`
-	OnlineAt     time.Time  `db:"online_at"`
-	RegisteredAt time.Time  `db:"registered_at"`
+	ID           uuid.UUID  `db:"id" json:"id"`
+	Username     string     `db:"username" json:"username"`
+	DisplayName  string     `db:"display_name" json:"display_name"`
+	Bio          string     `db:"bio" json:"bio"`
+	Email        string     `db:"email" json:"-"`
+	Gender       GenderType `db:"gender" json:"gender"`
+	Type         UserType   `db:"type" json:"type"`
+	AvatarID     uuid.UUID  `db:"avatar_id" json:"avatar_id"`
+	PasswordHash []byte     `db:"password_hash" json:"-"`
+	OnlineAt     time.Time  `db:"online_at" json:"online_at"`
+	RegisteredAt time.Time  `db:"registered_at" json:"registered_at"`
 }
 
 type CreateUserInput struct {
