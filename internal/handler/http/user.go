@@ -69,3 +69,24 @@ func (h *Handler) getUserByID(ctx echo.Context) error {
 
 	return nil
 }
+
+func (h *Handler) getSelfUser(ctx echo.Context) error {
+	user, ok := ctx.Get("requestUser").(models.User)
+	if !ok {
+		return h.newAppErrorResponse(ctx, errors.New("failed to get user from context"))
+	}
+
+	user, err := h.services.User.GetByID(ctx.Request().Context(), user.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrUserNotFound):
+			return h.newErrorResponse(ctx, http.StatusNotFound, err.Error())
+		default:
+			return h.newAppErrorResponse(ctx, err)
+		}
+	}
+
+	ctx.JSON(http.StatusOK, getUserResponse{User: user})
+
+	return nil
+}

@@ -67,6 +67,7 @@ func (h *Handler) initRoutes() {
 	{
 		user.GET("", h.getAllUsers, h.WithPagination())
 		user.GET("/id/:id", h.getUserByID)
+		user.GET("/self", h.getSelfUser)
 	}
 
 	v1.Group("/manga")
