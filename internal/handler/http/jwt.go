@@ -3,10 +3,12 @@ package http
 import (
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/lzaxel/zero-manga-backend/internal/jwt"
+	"github.com/lzaxel/zero-manga-backend/internal/models"
 )
 
 type JWTValidator interface {
@@ -32,6 +34,27 @@ func (h *Handler) Authorized() echo.MiddlewareFunc {
 			}
 
 			c.Set("requestUser", user)
+
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
+
+			return nil
+		}
+	}
+}
+
+func (h *Handler) RequireUserType(userTypes ...models.UserType) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user, ok := c.Get("requestUser").(models.User)
+			if !ok {
+				return h.newAppErrorResponse(c, errors.New("Handler.RequireUserType:failed to get user from context (forgot to use Authorize middleware)"))
+			}
+
+			if !slices.Contains(userTypes, user.Type) {
+				return h.newAuthErrorResponse(c, http.StatusForbidden, errors.New("access denied"))
+			}
 
 			if err := next(c); err != nil {
 				c.Error(err)

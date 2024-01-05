@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	middle "github.com/lzaxel/zero-manga-backend/internal/handler/http/middleware"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
+	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/service"
 )
 
@@ -65,7 +66,7 @@ func (h *Handler) initRoutes() {
 
 	user := v1.Group("/user", h.Authorized())
 	{
-		user.GET("", h.getAllUsers, h.WithPagination())
+		user.GET("", h.getAllUsers, h.WithPagination(), h.RequireUserType(models.UserTypeAdmin))
 		user.GET("/id/:id", h.getUserByID)
 		user.GET("/self", h.getSelfUser)
 	}

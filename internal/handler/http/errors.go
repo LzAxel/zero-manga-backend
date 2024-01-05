@@ -11,7 +11,7 @@ import (
 const (
 	validationErrorType = "validationError"
 	appErrorType        = "appError"
-	authErrorType       = "authorizationError"
+	authErrorType       = "authError"
 	baseErrorType       = "baseError"
 )
 
