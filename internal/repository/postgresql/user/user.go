@@ -204,29 +204,3 @@ func queryFilters(query squirrel.SelectBuilder, filters models.UserFilters) squi
 
 	return query
 }
-
-// func (p *UserPosgresql) CountAll(ctx context.Context, pagination postgresql.Pagination, filters models.UserFilters) (int64, error) {
-// 	var count int64
-
-// 	query := squirrel.
-// 		Select("COUNT(*)").
-// 		From(postgresql.UsersTable)
-
-// 	queryString, args, _ := queryFilters(query, filters).
-// 		Limit(pagination.Limit).
-// 		Offset(pagination.Offset).
-// 		PlaceholderFormat(squirrel.Dollar).
-// 		ToSql()
-
-// 	if err := p.db.GetContext(ctx, &count, queryString, args...); err != nil {
-// 		return count, apperror.NewDBError(
-// 			postgresql.HandleDBError(err),
-// 			"User",
-// 			"GetByEmail",
-// 			queryString,
-// 			args,
-// 		)
-// 	}
-
-// 	return count, nil
-// }
