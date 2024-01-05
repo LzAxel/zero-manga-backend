@@ -28,8 +28,8 @@ func New(ctx context.Context, jwt *jwt.JWT, userRepo repository.User) *Authoriza
 func (a *Authorization) Login(ctx context.Context, input models.LoginUserInput) (string, error) {
 	user, err := a.userRepo.GetByUsername(ctx, input.Username)
 	if err != nil {
-		if errors.As(err, &apperror.DBErorr{}) {
-			dbErr := err.(apperror.DBErorr)
+		if errors.As(err, &apperror.DBError{}) {
+			dbErr := err.(apperror.DBError)
 			if errors.Is(dbErr.Err, apperror.ErrNotFound) {
 				return "", models.ErrInvalidCredentials
 			}

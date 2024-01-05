@@ -18,14 +18,14 @@ type AppErorr struct {
 
 func (e AppErorr) Error() string {
 	return fmt.Sprintf(
-		"app error: %s.%s: %s: %v",
+		"app error:%s.%s:%s:data=%v",
 		e.Service, e.Func,
 		e.Err.Error(),
 		e.Data,
 	)
 }
 
-type DBErorr struct {
+type DBError struct {
 	Err     error
 	Service string
 	Func    string
@@ -34,9 +34,9 @@ type DBErorr struct {
 	Args  []interface{}
 }
 
-func (e DBErorr) Error() string {
+func (e DBError) Error() string {
 	return fmt.Sprintf(
-		"db error: %s.%s: %s: query: %s args: %v",
+		"db error:%s.%s:%s:query=%s args=%v",
 		e.Service, e.Func,
 		e.Err.Error(),
 		e.Query,
@@ -44,8 +44,8 @@ func (e DBErorr) Error() string {
 	)
 }
 
-func NewDBError(err error, service, funcName string, query string, args []interface{}) DBErorr {
-	return DBErorr{
+func NewDBError(err error, service, funcName string, query string, args []interface{}) DBError {
+	return DBError{
 		Err:     err,
 		Service: service,
 		Func:    funcName,

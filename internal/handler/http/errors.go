@@ -12,6 +12,7 @@ const (
 	validationErrorType = "validationError"
 	appErrorType        = "appError"
 	authErrorType       = "authorizationError"
+	baseErrorType       = "baseError"
 )
 
 type httpError struct {
@@ -33,10 +34,20 @@ func (h *Handler) newValidationErrorResponse(ctx echo.Context, code int, err err
 	})
 }
 
+func (h *Handler) newErrorResponse(ctx echo.Context, code int, err string) error {
+	return ctx.JSON(code, errorResponse{
+		Error: httpError{
+			Message: err,
+			Code:    code,
+			Type:    baseErrorType,
+		},
+	})
+}
+
 func (h *Handler) newAppErrorResponse(ctx echo.Context, err error) error {
 	switch {
-	case errors.As(err, &apperror.DBErorr{}):
-		dbErr := err.(apperror.DBErorr)
+	case errors.As(err, &apperror.DBError{}):
+		dbErr := err.(apperror.DBError)
 		h.logger.Error(dbErr.Err.Error(), map[string]interface{}{
 			"service": dbErr.Service,
 			"func":    dbErr.Func,

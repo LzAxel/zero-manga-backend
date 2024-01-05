@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 )
@@ -39,6 +40,32 @@ func (h *Handler) getAllUsers(ctx echo.Context) error {
 	}
 
 	ctx.JSON(http.StatusOK, getAllUsersResponse{Users: users, Pagination: pagination})
+
+	return nil
+}
+
+type getUserResponse struct {
+	User models.User `json:"user"`
+}
+
+func (h *Handler) getUserByID(ctx echo.Context) error {
+	id := ctx.Param("id")
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid user id"))
+	}
+
+	user, err := h.services.User.GetByID(ctx.Request().Context(), uuid)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrUserNotFound):
+			return h.newErrorResponse(ctx, http.StatusNotFound, err.Error())
+		default:
+			return h.newAppErrorResponse(ctx, err)
+		}
+	}
+
+	ctx.JSON(http.StatusOK, getUserResponse{User: user})
 
 	return nil
 }

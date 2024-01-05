@@ -28,6 +28,7 @@ const (
 
 var (
 	ErrUsernameEmailExists = errors.New("Username or email already taken")
+	ErrUserNotFound        = errors.New("User not found")
 )
 
 type UserFilters struct {
