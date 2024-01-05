@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -18,15 +19,19 @@ func (h *Handler) Authorized() echo.MiddlewareFunc {
 			authHeader := c.Request().Header.Get("Authorization")
 			splitAuth := strings.Split(authHeader, " ")
 			if len(splitAuth) != 2 {
-				return echo.NewHTTPError(http.StatusUnauthorized, jwt.ErrInvalidToken)
+				return h.newAuthErrorResponse(c, http.StatusUnauthorized, jwt.ErrInvalidToken)
 			}
 
 			claims, err := h.jwtValidator.ValidateToken(splitAuth[1])
 			if err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized, err)
+				return h.newAuthErrorResponse(c, http.StatusUnauthorized, err)
+			}
+			user, err := h.services.User.GetByID(c.Request().Context(), claims.Subject)
+			if err != nil {
+				return h.newAppErrorResponse(c, errors.New("failed to get user type"))
 			}
 
-			c.Set("userID", claims.Subject)
+			c.Set("requestUser", user)
 
 			if err := next(c); err != nil {
 				c.Error(err)

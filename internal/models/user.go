@@ -30,6 +30,25 @@ var (
 	ErrUsernameEmailExists = errors.New("Username or email already taken")
 )
 
+type UserFilters struct {
+	OnlineAt     *time.Time `query:"online_at"`
+	RegisteredAt *time.Time `query:"registered_at"`
+	Type         []uint8    `query:"type"`
+	Gender       []uint8    `query:"gender"`
+}
+
+type GetUserOutput struct {
+	ID           uuid.UUID  `db:"id"`
+	Username     string     `db:"username"`
+	DisplayName  string     `db:"display_name"`
+	Bio          string     `db:"bio"`
+	Gender       GenderType `db:"gender"`
+	Type         UserType   `db:"type"`
+	AvatarID     uuid.UUID  `db:"avatar_id"`
+	OnlineAt     time.Time  `db:"online_at"`
+	RegisteredAt time.Time  `db:"registered_at"`
+}
+
 type User struct {
 	ID           uuid.UUID  `db:"id"`
 	Username     string     `db:"username"`

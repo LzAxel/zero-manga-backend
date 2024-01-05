@@ -17,6 +17,7 @@ type User interface {
 	GetByID(ctx context.Context, id uuid.UUID) (models.User, error)
 	GetByUsername(ctx context.Context, username string) (models.User, error)
 	GetByEmail(ctx context.Context, email string) (models.User, error)
+	GetAll(ctx context.Context, pagination postgresql.Pagination, filters models.UserFilters) ([]models.User, uint64, error)
 }
 
 type Manga interface{}

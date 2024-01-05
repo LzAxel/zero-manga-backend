@@ -63,9 +63,9 @@ func (h *Handler) initRoutes() {
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	v1.Group("/user")
+	user := v1.Group("/user", h.Authorized())
 	{
-
+		user.GET("", h.getAllUsers, h.WithPagination())
 	}
 
 	v1.Group("/manga")
