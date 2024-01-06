@@ -14,8 +14,8 @@ func (u RealUUID) NewString() string { return uuid.NewString() }
 
 type DumbUUID struct{}
 
-func (u DumbUUID) New() uuid.UUID    { return uuid.UUID{} }
-func (u DumbUUID) NewString() string { return uuid.UUID{}.String() }
+func (u DumbUUID) New() uuid.UUID    { return uuid.Nil }
+func (u DumbUUID) NewString() string { return uuid.Nil.String() }
 
 var (
 	instance UUIDI = RealUUID{}
