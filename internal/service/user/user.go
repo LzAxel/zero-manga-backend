@@ -8,7 +8,6 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/apperror"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
-	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
 )
 
 type User struct {
@@ -38,7 +37,7 @@ func (u *User) GetByEmail(ctx context.Context, email string) (models.User, error
 }
 
 func (u *User) GetAll(ctx context.Context, pagination models.Pagination, filters models.UserFilters) ([]models.User, models.FullPagination, error) {
-	users, total, err := u.repo.GetAll(ctx, postgresql.Pagination{
+	users, total, err := u.repo.GetAll(ctx, models.DBPagination{
 		Offset: pagination.Offset(),
 		Limit:  pagination.Limit(),
 	}, filters)

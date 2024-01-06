@@ -71,9 +71,13 @@ func (h *Handler) initRoutes() {
 		user.GET("/self", h.getSelfUser)
 	}
 
-	v1.Group("/manga")
+	manga := v1.Group("/manga")
 	{
-
+		manga.POST("", h.createManga)
+		manga.GET("", h.getAllManga, h.WithPagination())
+		manga.GET("/one", h.getManga)
+		manga.PATCH("/:id", h.updateManga)
+		manga.DELETE("/:id", h.deleteManga)
 	}
 
 	v1.Group("/chapter")

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/lzaxel/zero-manga-backend/internal/config"
+	"github.com/lzaxel/zero-manga-backend/internal/filestorage"
 	"github.com/lzaxel/zero-manga-backend/internal/handler/http"
 	"github.com/lzaxel/zero-manga-backend/internal/jwt"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
@@ -41,9 +42,12 @@ func New(config config.Config) *App {
 	if err != nil {
 		logger.Warnf("migrate database: %s", err)
 	}
+	fileStorage := filestorage.NewLocalFileStorage(config.FileStorage, logger)
+	go fileStorage.Serve()
+
 	jwt := jwt.New(config.JWT)
 	repository := repository.New(ctx, psql, logger)
-	services := service.New(ctx, repository, jwt)
+	services := service.New(ctx, repository, jwt, fileStorage)
 	handler := http.New(config.Server, services, logger, jwt)
 
 	return &App{

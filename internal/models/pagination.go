@@ -59,3 +59,8 @@ func (p *Pagination) GetFull(total uint64) FullPagination {
 		Total:     total,
 	}
 }
+
+type DBPagination struct {
+	Offset uint64
+	Limit  uint64
+}

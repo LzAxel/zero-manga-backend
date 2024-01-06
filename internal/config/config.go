@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/lzaxel/zero-manga-backend/internal/filestorage"
 	"github.com/lzaxel/zero-manga-backend/internal/handler/http"
 	"github.com/lzaxel/zero-manga-backend/internal/jwt"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
@@ -20,10 +21,11 @@ type AppConfig struct {
 }
 
 type Config struct {
-	Postgresql postgresql.Config `yaml:"postgres"`
-	Server     http.Config       `yaml:"server"`
-	App        AppConfig         `yaml:"app"`
-	JWT        jwt.Config        `yaml:"jwt"`
+	Postgresql  postgresql.Config                  `yaml:"postgres"`
+	Server      http.Config                        `yaml:"server"`
+	App         AppConfig                          `yaml:"app"`
+	JWT         jwt.Config                         `yaml:"jwt"`
+	FileStorage filestorage.LocalFileStorageConfig `yaml:"fileStorage"`
 }
 
 var (

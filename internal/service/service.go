@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lzaxel/zero-manga-backend/internal/filestorage"
 	"github.com/lzaxel/zero-manga-backend/internal/jwt"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
@@ -25,7 +26,13 @@ type User interface {
 	GetAll(ctx context.Context, pagination models.Pagination, filters models.UserFilters) ([]models.User, models.FullPagination, error)
 }
 
-type Manga interface{}
+type Manga interface {
+	Create(ctx context.Context, manga models.CreateMangaInput) error
+	GetOne(ctx context.Context, filters models.MangaFilters) (models.MangaOutput, error)
+	GetAll(ctx context.Context, pagination models.DBPagination, filters models.MangaGetAllFilters) ([]models.MangaOutput, uint64, error)
+	Update(ctx context.Context, manga models.UpdateMangaInput) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
 
 type Chapter interface{}
 
@@ -36,10 +43,15 @@ type Services struct {
 	Authorization
 }
 
-func New(ctx context.Context, repository *repository.Repository, jwt *jwt.JWT) *Services {
+func New(
+	ctx context.Context,
+	repository *repository.Repository,
+	jwt *jwt.JWT,
+	fileStorage filestorage.FileStorage,
+) *Services {
 	return &Services{
 		User:          user.New(ctx, repository.User),
-		Manga:         manga.New(ctx, repository.Manga),
+		Manga:         manga.New(ctx, repository.Manga, fileStorage),
 		Chapter:       chapter.New(ctx, repository.Chapter),
 		Authorization: auth.New(ctx, jwt, repository.User),
 	}

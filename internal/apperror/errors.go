@@ -9,20 +9,29 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
-type AppErorr struct {
+type AppError struct {
 	Err     error
 	Service string
 	Func    string
 	Data    map[string]interface{}
 }
 
-func (e AppErorr) Error() string {
+func (e AppError) Error() string {
 	return fmt.Sprintf(
 		"app error:%s.%s:%s:data=%v",
 		e.Service, e.Func,
 		e.Err.Error(),
 		e.Data,
 	)
+}
+
+func NewAppError(err error, service, funcName string, data map[string]interface{}) AppError {
+	return AppError{
+		Err:     err,
+		Service: service,
+		Func:    funcName,
+		Data:    data,
+	}
 }
 
 type DBError struct {

@@ -135,7 +135,7 @@ func (p *UserPosgresql) GetByEmail(ctx context.Context, email string) (models.Us
 	return user, nil
 }
 
-func (p *UserPosgresql) GetAll(ctx context.Context, pagination postgresql.Pagination, filters models.UserFilters) ([]models.User, uint64, error) {
+func (p *UserPosgresql) GetAll(ctx context.Context, pagination models.DBPagination, filters models.UserFilters) ([]models.User, uint64, error) {
 	// getting users
 	query := squirrel.
 		Select("*").

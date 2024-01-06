@@ -21,9 +21,6 @@ func (h *Handler) getAllUsers(ctx echo.Context) error {
 	if err != nil {
 		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
 	}
-	h.logger.Debug("filters", map[string]interface{}{
-		"filters": filters,
-	})
 
 	reqPagination, err := getPaginationFromContext(ctx)
 	if err != nil {
