@@ -56,6 +56,7 @@ type MangaOutput struct {
 	SecondaryTitle *string     `json:"secondary_title"`
 	Description    string      `json:"description"`
 	Slug           string      `json:"slug"`
+	ChaptersCount  uint64      `json:"chapters_count"`
 	Type           NovelType   `json:"type"`
 	Status         MangaStatus `json:"status"`
 	AgeRestrict    AgeRestrict `json:"age_restrict"`

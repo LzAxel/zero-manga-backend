@@ -33,7 +33,7 @@ func (h *Handler) Authorized() echo.MiddlewareFunc {
 				return h.newAppErrorResponse(c, errors.New("failed to get user type"))
 			}
 
-			c.Set("requestUser", user)
+			c.Set("user", user)
 
 			if err := next(c); err != nil {
 				c.Error(err)
@@ -47,7 +47,7 @@ func (h *Handler) Authorized() echo.MiddlewareFunc {
 func (h *Handler) RequireUserType(userTypes ...models.UserType) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user, ok := c.Get("requestUser").(models.User)
+			user, ok := c.Get("user").(models.User)
 			if !ok {
 				return h.newAppErrorResponse(c, errors.New("Handler.RequireUserType:failed to get user from context (forgot to use Authorize middleware)"))
 			}

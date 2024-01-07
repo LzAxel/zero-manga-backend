@@ -68,7 +68,7 @@ func (h *Handler) getUserByID(ctx echo.Context) error {
 }
 
 func (h *Handler) getSelfUser(ctx echo.Context) error {
-	user, ok := ctx.Get("requestUser").(models.User)
+	user, ok := ctx.Get("user").(models.User)
 	if !ok {
 		return h.newAppErrorResponse(ctx, errors.New("failed to get user from context"))
 	}

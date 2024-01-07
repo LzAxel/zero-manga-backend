@@ -22,14 +22,16 @@ type Uploader interface {
 }
 
 type Manga struct {
-	repo     repository.Manga
-	uploader Uploader
+	repo         repository.Manga
+	chaptersRepo repository.Chapter
+	uploader     Uploader
 }
 
-func New(ctx context.Context, repository repository.Manga, uploader Uploader) *Manga {
+func New(ctx context.Context, repository repository.Manga, chaptersRepo repository.Chapter, uploader Uploader) *Manga {
 	return &Manga{
-		repo:     repository,
-		uploader: uploader,
+		repo:         repository,
+		chaptersRepo: chaptersRepo,
+		uploader:     uploader,
 	}
 }
 
@@ -131,6 +133,11 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 		return models.MangaOutput{}, handleNotFoundError(err)
 	}
 
+	chaptersCount, err := m.chaptersRepo.CountByManga(ctx, manga.ID)
+	if err != nil {
+		return models.MangaOutput{}, err
+	}
+
 	return models.MangaOutput{
 		ID:             manga.ID,
 		Title:          manga.Title,
@@ -142,16 +149,22 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 		AgeRestrict:    manga.AgeRestrict,
 		ReleaseYear:    manga.ReleaseYear,
 		PreviewURL:     manga.PreviewURL,
+		ChaptersCount:  chaptersCount,
 	}, nil
 }
 func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filters models.MangaGetAllFilters) ([]models.MangaOutput, uint64, error) {
-	manga, count, err := m.repo.GetAll(ctx, pagination, filters)
+	mangaList, count, err := m.repo.GetAll(ctx, pagination, filters)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	newManga := make([]models.MangaOutput, len(manga))
-	for i, manga := range manga {
+	newManga := make([]models.MangaOutput, len(mangaList))
+	for i, manga := range mangaList {
+		chaptersCount, err := m.chaptersRepo.CountByManga(ctx, manga.ID)
+		if err != nil {
+			return []models.MangaOutput{}, 0, err
+		}
+
 		newManga[i] = models.MangaOutput{
 			ID:             manga.ID,
 			Title:          manga.Title,
@@ -163,6 +176,7 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 			AgeRestrict:    manga.AgeRestrict,
 			ReleaseYear:    manga.ReleaseYear,
 			PreviewURL:     manga.PreviewURL,
+			ChaptersCount:  chaptersCount,
 		}
 	}
 

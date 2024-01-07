@@ -35,7 +35,11 @@ type Manga interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type Chapter interface{}
+type Chapter interface {
+	Create(ctx context.Context, chapter models.CreateChapterInput) error
+	GetAllByManga(ctx context.Context, pagination models.DBPagination, mangaID uuid.UUID) ([]models.Chapter, uint64, error)
+	Get(ctx context.Context, chapterID uuid.UUID) (models.ChapterOutput, error)
+}
 
 type Services struct {
 	User
@@ -53,8 +57,8 @@ func New(
 	uploader := uploader.NewUploader(fileStorage)
 	return &Services{
 		User:          user.New(ctx, repository.User),
-		Manga:         manga.New(ctx, repository.Manga, uploader),
-		Chapter:       chapter.New(ctx, repository.Chapter),
+		Manga:         manga.New(ctx, repository.Manga, repository.Chapter, uploader),
+		Chapter:       chapter.New(ctx, repository.Chapter, repository.Page, uploader),
 		Authorization: auth.New(ctx, jwt, repository.User),
 	}
 }

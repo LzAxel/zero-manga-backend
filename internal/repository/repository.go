@@ -9,6 +9,7 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/chapter"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/manga"
+	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/page"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/user"
 )
 
@@ -28,12 +29,26 @@ type Manga interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type Chapter interface{}
+type Chapter interface {
+	Create(ctx context.Context, chapter models.Chapter) error
+	GetAllByManga(ctx context.Context, pagination models.DBPagination, mangaID uuid.UUID) ([]models.Chapter, uint64, error)
+	GetByID(ctx context.Context, id uuid.UUID) (models.Chapter, error)
+	GetByNumber(ctx context.Context, filter models.ChapterFilter) (models.Chapter, error)
+	CountByManga(ctx context.Context, mangaID uuid.UUID) (uint64, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type Page interface {
+	GetAllByChapter(ctx context.Context, chapterID uuid.UUID) ([]models.Page, error)
+	Create(ctx context.Context, page models.Page) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
 
 type Repository struct {
 	User
 	Manga
 	Chapter
+	Page
 }
 
 func New(ctx context.Context, psql postgresql.PostgresqlRepository, logger logger.Logger) *Repository {
@@ -41,5 +56,6 @@ func New(ctx context.Context, psql postgresql.PostgresqlRepository, logger logge
 		User:    user.New(ctx, psql.DB),
 		Manga:   manga.New(ctx, psql.DB),
 		Chapter: chapter.New(ctx, psql.DB),
+		Page:    page.New(ctx, psql.DB),
 	}
 }

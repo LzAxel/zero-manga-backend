@@ -1,0 +1,2 @@
+ALTER TABLE chapter
+    ADD COLUMN file_path VARCHAR(100) NOT NULL;

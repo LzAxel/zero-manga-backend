@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	MaxMangaPreviewFileSize = (1 << 20) * 2 // 2 MB
+	MaxMangaPreviewFileSize = (1 << 20) * 2  // 2 MB
+	MaxMangaPageZipFileSize = (1 << 20) * 20 // 20 MB
 )
 
 var (

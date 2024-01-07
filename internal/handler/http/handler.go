@@ -80,9 +80,11 @@ func (h *Handler) initRoutes() {
 		manga.DELETE("/:id", h.deleteManga)
 	}
 
-	v1.Group("/chapter")
+	chapter := v1.Group("/chapter")
 	{
-
+		chapter.POST("", h.createChapter, h.Authorized())
+		chapter.GET("/all/:manga_id", h.getChapterByManga, h.WithPagination())
+		chapter.GET("/:id", h.getChapter)
 	}
 }
 
