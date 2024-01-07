@@ -16,6 +16,7 @@ const (
 	UsersTable   = "users"
 	MangaTable   = "manga"
 	ChapterTable = "chapter"
+	PageTable    = "page"
 )
 
 func HandleDBError(err error) error {
