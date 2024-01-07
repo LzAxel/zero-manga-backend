@@ -47,7 +47,7 @@ type Manga struct {
 	Status         MangaStatus `db:"status"`
 	AgeRestrict    AgeRestrict `db:"age_restrict"`
 	ReleaseYear    uint16      `db:"release_year"`
-	PreviewFileID  uuid.UUID   `db:"preview_file_id"`
+	PreviewURL     string      `db:"preview_url"`
 }
 
 type MangaOutput struct {
@@ -85,7 +85,7 @@ type UpdateMangaRecord struct {
 	Status         *MangaStatus
 	AgeRestrict    *AgeRestrict
 	ReleaseYear    *uint16
-	PreviewFileID  *uuid.UUID
+	PreviewURL     *string
 }
 
 func NewUpdateMangaInput(

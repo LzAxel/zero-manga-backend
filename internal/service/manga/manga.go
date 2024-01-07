@@ -15,24 +15,25 @@ import (
 	guuid "github.com/google/uuid"
 )
 
-type Manga struct {
-	repo        repository.Manga
-	fileStorage filestorage.FileStorage
+type Uploader interface {
+	UploadMangaPreview(ctx context.Context, mangaID guuid.UUID, file models.UploadFile) (filestorage.FileInfo, error)
+	DeleteMangaPreview(ctx context.Context, mangaID guuid.UUID, previewID guuid.UUID) error
+	DeleteManga(ctx context.Context, mangaID guuid.UUID) error
 }
 
-func New(ctx context.Context, repository repository.Manga, fileStorage filestorage.FileStorage) *Manga {
+type Manga struct {
+	repo     repository.Manga
+	uploader Uploader
+}
+
+func New(ctx context.Context, repository repository.Manga, uploader Uploader) *Manga {
 	return &Manga{
-		repo:        repository,
-		fileStorage: fileStorage,
+		repo:     repository,
+		uploader: uploader,
 	}
 }
 
 func (m *Manga) Create(ctx context.Context, manga models.CreateMangaInput) error {
-	fileID, err := m.fileStorage.SaveFile(filestorage.MangaBucket, manga.PreviewFile.Filename, manga.PreviewFile.Data)
-	if err != nil {
-		return err
-	}
-
 	dto := models.Manga{
 		ID:             uuid.New(),
 		Title:          manga.Title,
@@ -43,18 +44,24 @@ func (m *Manga) Create(ctx context.Context, manga models.CreateMangaInput) error
 		Status:         manga.Status,
 		AgeRestrict:    manga.AgeRestrict,
 		ReleaseYear:    manga.ReleaseYear,
-		PreviewFileID:  fileID,
 	}
+
+	preview, err := m.uploader.UploadMangaPreview(ctx, dto.ID, manga.PreviewFile)
+	if err != nil {
+		return err
+	}
+
+	dto.PreviewURL = preview.URL
 
 	err = m.repo.Create(ctx, dto)
 	if err != nil {
-		delErr := m.fileStorage.DeleteFile(filestorage.MangaBucket, fileID)
+		delErr := m.uploader.DeleteMangaPreview(ctx, dto.ID, preview.ID)
 		if delErr != nil {
 			return apperror.NewAppError(
 				fmt.Errorf("failed to delete file on create manga error: %w: %w", delErr, err),
 				"Manga",
 				"Create",
-				map[string]any{"file_id": fileID.String()},
+				nil,
 			)
 		}
 
@@ -66,21 +73,23 @@ func (m *Manga) Create(ctx context.Context, manga models.CreateMangaInput) error
 
 func (m *Manga) Update(ctx context.Context, manga models.UpdateMangaInput) error {
 	var (
-		fileID  *guuid.UUID
-		newSlug *string
+		previewURL *string
+		newSlug    *string
+		err        error
 	)
-
-	if manga.PreviewFile != nil {
-		previewFileID, err := m.fileStorage.SaveFile(filestorage.MangaBucket, manga.PreviewFile.Filename, manga.PreviewFile.Data)
-		if err != nil {
-			return err
-		}
-		fileID = &previewFileID
-	}
 
 	if manga.Title != nil {
 		newSlugVal := slug.GenerateSlug(*manga.Title)
 		newSlug = &newSlugVal
+	}
+	var previewID guuid.UUID
+	if manga.PreviewFile != nil {
+		newPreview, err := m.uploader.UploadMangaPreview(ctx, manga.ID, *manga.PreviewFile)
+		if err != nil {
+			return err
+		}
+		previewID = newPreview.ID
+		previewURL = &newPreview.URL
 	}
 
 	dto := models.UpdateMangaRecord{
@@ -93,19 +102,19 @@ func (m *Manga) Update(ctx context.Context, manga models.UpdateMangaInput) error
 		Status:         manga.Status,
 		AgeRestrict:    manga.AgeRestrict,
 		ReleaseYear:    manga.ReleaseYear,
-		PreviewFileID:  fileID,
+		PreviewURL:     previewURL,
 	}
 
-	err := m.repo.Update(ctx, dto)
+	err = m.repo.Update(ctx, dto)
 	if err != nil {
-		if fileID != nil {
-			delErr := m.fileStorage.DeleteFile(filestorage.MangaBucket, *fileID)
+		if manga.PreviewFile != nil {
+			delErr := m.uploader.DeleteMangaPreview(ctx, dto.ID, previewID)
 			if delErr != nil {
 				return apperror.NewAppError(
 					fmt.Errorf("failed to delete file on update manga error: %w: %w", delErr, err),
 					"Manga",
 					"Update",
-					map[string]any{"file_id": fileID.String()},
+					nil,
 				)
 			}
 		}
@@ -121,10 +130,6 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 	if err != nil {
 		return models.MangaOutput{}, handleNotFoundError(err)
 	}
-	previewURL, err := m.fileStorage.GetFileURL(filestorage.MangaBucket, manga.PreviewFileID)
-	if err != nil {
-		return models.MangaOutput{}, err
-	}
 
 	return models.MangaOutput{
 		ID:             manga.ID,
@@ -136,7 +141,7 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 		Status:         manga.Status,
 		AgeRestrict:    manga.AgeRestrict,
 		ReleaseYear:    manga.ReleaseYear,
-		PreviewURL:     previewURL,
+		PreviewURL:     manga.PreviewURL,
 	}, nil
 }
 func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filters models.MangaGetAllFilters) ([]models.MangaOutput, uint64, error) {
@@ -147,11 +152,6 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 
 	newManga := make([]models.MangaOutput, len(manga))
 	for i, manga := range manga {
-		previewURL, err := m.fileStorage.GetFileURL(filestorage.MangaBucket, manga.PreviewFileID)
-		if err != nil {
-			return nil, 0, err
-		}
-
 		newManga[i] = models.MangaOutput{
 			ID:             manga.ID,
 			Title:          manga.Title,
@@ -162,7 +162,7 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 			Status:         manga.Status,
 			AgeRestrict:    manga.AgeRestrict,
 			ReleaseYear:    manga.ReleaseYear,
-			PreviewURL:     previewURL,
+			PreviewURL:     manga.PreviewURL,
 		}
 	}
 
@@ -170,7 +170,16 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 }
 
 func (m *Manga) Delete(ctx context.Context, id guuid.UUID) error {
-	return m.repo.Delete(ctx, id)
+	err := m.repo.Delete(ctx, id)
+	if err != nil {
+		return fmt.Errorf("Manga.Delete: delete from db %w", err)
+	}
+	err = m.uploader.DeleteManga(ctx, id)
+	if err != nil {
+		return fmt.Errorf("Manga.Delete: delete from file storage %w", err)
+	}
+
+	return nil
 }
 
 func handleNotFoundError(err error) error {

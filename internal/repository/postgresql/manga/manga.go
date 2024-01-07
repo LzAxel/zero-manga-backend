@@ -34,7 +34,7 @@ func (m *MangaPosgresql) Create(ctx context.Context, manga models.Manga) error {
 			"status",
 			"age_restrict",
 			"release_year",
-			"preview_file_id",
+			"preview_url",
 		).
 		Values(
 			manga.ID,
@@ -46,7 +46,7 @@ func (m *MangaPosgresql) Create(ctx context.Context, manga models.Manga) error {
 			manga.Status,
 			manga.AgeRestrict,
 			manga.ReleaseYear,
-			manga.PreviewFileID,
+			manga.PreviewURL,
 		).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
@@ -211,8 +211,8 @@ func (m *MangaPosgresql) Update(ctx context.Context, manga models.UpdateMangaRec
 	if manga.ReleaseYear != nil {
 		query = query.Set("release_year", *manga.ReleaseYear)
 	}
-	if manga.PreviewFileID != nil {
-		query = query.Set("preview_file_id", *manga.PreviewFileID)
+	if manga.PreviewURL != nil {
+		query = query.Set("preview_url", *manga.PreviewURL)
 	}
 
 	queryString, args, _ := query.

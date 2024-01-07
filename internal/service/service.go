@@ -11,6 +11,7 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/service/auth"
 	"github.com/lzaxel/zero-manga-backend/internal/service/chapter"
 	"github.com/lzaxel/zero-manga-backend/internal/service/manga"
+	"github.com/lzaxel/zero-manga-backend/internal/service/uploader"
 	"github.com/lzaxel/zero-manga-backend/internal/service/user"
 )
 
@@ -49,9 +50,10 @@ func New(
 	jwt *jwt.JWT,
 	fileStorage filestorage.FileStorage,
 ) *Services {
+	uploader := uploader.NewUploader(fileStorage)
 	return &Services{
 		User:          user.New(ctx, repository.User),
-		Manga:         manga.New(ctx, repository.Manga, fileStorage),
+		Manga:         manga.New(ctx, repository.Manga, uploader),
 		Chapter:       chapter.New(ctx, repository.Chapter),
 		Authorization: auth.New(ctx, jwt, repository.User),
 	}

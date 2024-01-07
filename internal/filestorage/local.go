@@ -33,25 +33,31 @@ func NewLocalFileStorage(config LocalFileStorageConfig, logger logger.Logger) *L
 	}
 }
 
-func (s *LocalFileStorage) SaveFile(bucket string, filename string, data []byte) (uuid.UUID, error) {
+func (s *LocalFileStorage) SaveFile(bucket string, filename string, data []byte) (FileInfo, error) {
 	id := uuid.New()
 	fileExtansion := filepath.Ext(filename)
 
 	filePath := filepath.Join(s.storagePath, bucket, id.String()+fileExtansion)
 	os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
 
+	var fileInfo = FileInfo{
+		ID:        id,
+		Extension: fileExtansion,
+		URL:       s.formatFileURL(bucket, filePath),
+	}
+
 	file, err := os.Create(filePath)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("LocalFileStorage.SaveFile: creating file: %w", err)
+		return fileInfo, fmt.Errorf("LocalFileStorage.SaveFile: creating file: %w", err)
 	}
 	defer file.Close()
 
 	_, err = file.Write(data)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("LocalFileStorage.SaveFile: writing file: %w", err)
+		return fileInfo, fmt.Errorf("LocalFileStorage.SaveFile: writing file: %w", err)
 	}
 
-	return id, nil
+	return fileInfo, nil
 }
 
 func (s *LocalFileStorage) GetFile(bucket string, id uuid.UUID) ([]byte, error) {
@@ -81,24 +87,43 @@ func (s *LocalFileStorage) DeleteFile(bucket string, id uuid.UUID) error {
 	return nil
 }
 
-func (s *LocalFileStorage) GetFilePath(bucket string, id uuid.UUID) (string, error) {
-	filepath, err := s.findFilePathByUUID(bucket, id)
-	if err != nil {
-		return "", fmt.Errorf("LocalFileStorage.GetFileURI: %w", err)
+func (s *LocalFileStorage) GetFileInfo(bucket string, id uuid.UUID) (FileInfo, error) {
+	var fileInfo = FileInfo{
+		ID: id,
 	}
 
-	return filepath, nil
+	filePath, err := s.findFilePathByUUID(bucket, id)
+	if err != nil {
+		return fileInfo, fmt.Errorf("LocalFileStorage.GetFileURL: %w", err)
+	}
+	fileInfo.Extension = filepath.Ext(filePath)
+	fileInfo.URL = s.formatFileURL(bucket, filePath)
+
+	return fileInfo, nil
 }
 
-func (s *LocalFileStorage) GetFileURL(bucket string, id uuid.UUID) (string, error) {
-	filepath, err := s.findFilePathByUUID(bucket, id)
+func (s *LocalFileStorage) GetFilesFromBucket(bucket string) ([]FileInfo, error) {
+	files, err := os.ReadDir(filepath.Join(s.storagePath, bucket))
 	if err != nil {
-		return "", fmt.Errorf("LocalFileStorage.GetFileURL: %w", err)
+		return nil, fmt.Errorf("LocalFileStorage.GetFilesFromBucket: %w", err)
 	}
 
-	fileurl := fmt.Sprintf("http://%s:%d/", s.host, s.port) + path.Join(bucket, path.Base(filepath))
+	var fileInfos = make([]FileInfo, len(files))
 
-	return fileurl, nil
+	for i, file := range files {
+		ext := filepath.Ext(file.Name())
+		id, err := uuid.Parse(file.Name()[:len(file.Name())-len(ext)])
+		if err != nil {
+			return nil, fmt.Errorf("LocalFileStorage.GetFilesFromBucket: parsing id from filename:%w", err)
+		}
+		fileInfos[i] = FileInfo{
+			ID:        id,
+			Extension: filepath.Ext(file.Name()),
+			URL:       s.formatFileURL(bucket, filepath.Join(bucket, file.Name())),
+		}
+	}
+
+	return fileInfos, nil
 }
 
 func (s *LocalFileStorage) findFilePathByUUID(bucket string, id uuid.UUID) (string, error) {
@@ -114,10 +139,22 @@ func (s *LocalFileStorage) findFilePathByUUID(bucket string, id uuid.UUID) (stri
 	return paths[0], nil
 }
 
+func (s *LocalFileStorage) DeleteBucket(bucket string) error {
+	err := os.RemoveAll(filepath.Join(s.storagePath, bucket))
+	if err != nil {
+		return fmt.Errorf("LocalFileStorage.DeleteBucket: %w", err)
+	}
+	return nil
+}
+
 func (s *LocalFileStorage) Serve() {
 	s.logger.Infof("starting local file storage server on %s:%d (path: %s)", s.host, s.port, s.storagePath)
 	http.Handle("/", http.FileServer(http.Dir(s.storagePath)))
 	http.ListenAndServe(fmt.Sprintf("%s:%d", s.host, s.port),
 		nil,
 	)
+}
+
+func (s *LocalFileStorage) formatFileURL(bucket string, filepath string) string {
+	return fmt.Sprintf("http://%s:%d/", s.host, s.port) + path.Join(bucket, path.Base(filepath))
 }
