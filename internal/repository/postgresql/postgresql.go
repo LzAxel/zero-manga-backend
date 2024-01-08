@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	"github.com/lzaxel/zero-manga-backend/internal/apperror"
 )
 
 const (
@@ -19,13 +18,6 @@ const (
 	PageTable    = "page"
 )
 
-func HandleDBError(err error) error {
-	if errors.Is(err, sql.ErrNoRows) {
-		return apperror.ErrNotFound
-	}
-
-	return err
-}
 func GetPgError(err error) *pgconn.PgError {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {

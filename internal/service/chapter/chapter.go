@@ -2,12 +2,14 @@ package chapter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/lzaxel/zero-manga-backend/internal/apperror"
 	"github.com/lzaxel/zero-manga-backend/internal/filestorage"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
@@ -20,20 +22,23 @@ type Uploader interface {
 }
 
 type Chapter struct {
-	repo     repository.Chapter
-	pageRepo repository.Page
-	uploader Uploader
+	repo      repository.Chapter
+	pageRepo  repository.Page
+	mangaRepo repository.Manga
+	uploader  Uploader
 }
 
 func New(ctx context.Context,
 	repository repository.Chapter,
 	pageRepo repository.Page,
+	mangaRepo repository.Manga,
 	uploader Uploader,
 ) *Chapter {
 	return &Chapter{
-		repo:     repository,
-		pageRepo: pageRepo,
-		uploader: uploader,
+		repo:      repository,
+		pageRepo:  pageRepo,
+		mangaRepo: mangaRepo,
+		uploader:  uploader,
 	}
 }
 
@@ -112,6 +117,12 @@ func (c *Chapter) Create(ctx context.Context, chapter models.CreateChapterInput)
 }
 
 func (c *Chapter) GetAllByManga(ctx context.Context, pagination models.DBPagination, mangaID uuid.UUID) ([]models.Chapter, uint64, error) {
+	_, err := c.mangaRepo.GetOne(ctx, models.MangaFilters{ID: &mangaID})
+	if err != nil {
+		if errors.Is(err, apperror.ErrNotFound) {
+			return nil, 0, models.ErrMangaNotFound
+		}
+	}
 	mangaList, count, err := c.repo.GetAllByManga(ctx, pagination, mangaID)
 	if err != nil {
 		return nil, 0, err
@@ -123,7 +134,7 @@ func (c *Chapter) GetAllByManga(ctx context.Context, pagination models.DBPaginat
 func (c *Chapter) Get(ctx context.Context, chapterID uuid.UUID) (models.ChapterOutput, error) {
 	chapter, err := c.repo.GetByID(ctx, chapterID)
 	if err != nil {
-		return models.ChapterOutput{}, fmt.Errorf("Chapter.Get: GetByID: %w", err)
+		return models.ChapterOutput{}, fmt.Errorf("Chapter.Get: GetByID: %w", handleNotFoundError(err))
 	}
 	pages, err := c.pageRepo.GetAllByChapter(ctx, chapterID)
 	if err != nil {
@@ -143,4 +154,11 @@ func (c *Chapter) Get(ctx context.Context, chapterID uuid.UUID) (models.ChapterO
 
 func isValidPageExtensions(filename string) bool {
 	return slices.Contains(validPageExtensions, filepath.Ext(filename))
+}
+
+func handleNotFoundError(err error) error {
+	if errors.Is(err, apperror.ErrNotFound) {
+		return models.ErrChapterNotFound
+	}
+	return err
 }

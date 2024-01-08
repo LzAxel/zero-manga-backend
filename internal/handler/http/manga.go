@@ -147,7 +147,7 @@ func (h *Handler) getManga(ctx echo.Context) error {
 
 	err := ctx.Bind(&filters)
 	if err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("Invalid filters"))
 	}
 
 	manga, err := h.services.Manga.GetOne(ctx.Request().Context(), filters)

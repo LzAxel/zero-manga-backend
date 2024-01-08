@@ -2,6 +2,8 @@ package chapter
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -48,7 +50,7 @@ func (c *ChapterPosgresql) Create(ctx context.Context, chapter models.Chapter) e
 
 	if _, err := c.db.ExecContext(ctx, query, args...); err != nil {
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"Create",
 			query,
@@ -77,7 +79,7 @@ func (m *ChapterPosgresql) GetAllByManga(ctx context.Context, pagination models.
 	var chapters = make([]models.Chapter, 0)
 	if err := m.db.SelectContext(ctx, &chapters, query, args...); err != nil {
 		return chapters, count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"GetAllByManga",
 			query,
@@ -97,7 +99,7 @@ func (m *ChapterPosgresql) GetAllByManga(ctx context.Context, pagination models.
 
 	if err := m.db.GetContext(ctx, &count, query, args...); err != nil {
 		return chapters, count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"GetAllByManga",
 			query,
@@ -121,7 +123,7 @@ func (m *ChapterPosgresql) CountByManga(ctx context.Context, mangaID uuid.UUID) 
 
 	if err := m.db.GetContext(ctx, &count, query, args...); err != nil {
 		return count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"GetAllByManga",
 			query,
@@ -142,8 +144,12 @@ func (c *ChapterPosgresql) GetByID(ctx context.Context, id uuid.UUID) (models.Ch
 
 	var chapter models.Chapter
 	if err := c.db.GetContext(ctx, &chapter, query, args...); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return chapter, apperror.ErrNotFound
+		}
 		return models.Chapter{}, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"GetByID",
 			query,
@@ -168,8 +174,12 @@ func (c *ChapterPosgresql) GetByNumber(ctx context.Context, filter models.Chapte
 
 	var chapter models.Chapter
 	if err := c.db.GetContext(ctx, &chapter, query, args...); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return chapter, apperror.ErrNotFound
+		}
 		return models.Chapter{}, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"GetByNumber",
 			query,
@@ -189,7 +199,7 @@ func (c *ChapterPosgresql) Delete(ctx context.Context, id uuid.UUID) error {
 
 	if _, err := c.db.ExecContext(ctx, query, args...); err != nil {
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Chapter",
 			"Delete",
 			query,

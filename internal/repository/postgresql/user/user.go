@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -53,14 +55,16 @@ func (p *UserPosgresql) Create(ctx context.Context, user models.CreateUserRecord
 
 	if _, err := p.db.ExecContext(ctx, query, args...); err != nil {
 		pgErr := postgresql.GetPgError(err)
-		if pgErr != nil {
-			switch {
-			case pgErr.Code == pgerrcode.UniqueViolation:
-				return models.ErrUsernameEmailExists
-			}
+
+		switch {
+		case pgErr != nil && pgErr.Code == pgerrcode.UniqueViolation:
+			return models.ErrUsernameEmailExists
+		case errors.Is(err, sql.ErrNoRows):
+			return apperror.ErrNotFound
 		}
+
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"User",
 			"Create",
 			query,
@@ -81,8 +85,12 @@ func (p *UserPosgresql) GetByID(ctx context.Context, id uuid.UUID) (models.User,
 
 	var user models.User
 	if err := p.db.GetContext(ctx, &user, query, args...); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return user, apperror.ErrNotFound
+		}
 		return user, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"User",
 			"GetByID",
 			query,
@@ -102,8 +110,12 @@ func (p *UserPosgresql) GetByUsername(ctx context.Context, username string) (mod
 
 	var user models.User
 	if err := p.db.GetContext(ctx, &user, query, args...); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return user, apperror.ErrNotFound
+		}
 		return user, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"User",
 			"GetByUsername",
 			query,
@@ -123,8 +135,12 @@ func (p *UserPosgresql) GetByEmail(ctx context.Context, email string) (models.Us
 
 	var user models.User
 	if err := p.db.GetContext(ctx, &user, query, args...); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return user, apperror.ErrNotFound
+		}
 		return user, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"User",
 			"GetByEmail",
 			query,
@@ -151,7 +167,7 @@ func (p *UserPosgresql) GetAll(ctx context.Context, pagination models.DBPaginati
 	var users = make([]models.User, 0)
 	if err := p.db.SelectContext(ctx, &users, queryString, args...); err != nil {
 		return users, count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"User",
 			"GetAll",
 			queryString,
@@ -169,7 +185,7 @@ func (p *UserPosgresql) GetAll(ctx context.Context, pagination models.DBPaginati
 
 	if err := p.db.GetContext(ctx, &count, queryString, args...); err != nil {
 		return users, count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"User",
 			"GetAll",
 			queryString,

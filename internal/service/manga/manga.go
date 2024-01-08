@@ -180,7 +180,7 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 		}
 	}
 
-	return newManga, count, handleNotFoundError(err)
+	return newManga, count, err
 }
 
 func (m *Manga) Delete(ctx context.Context, id guuid.UUID) error {
@@ -197,17 +197,8 @@ func (m *Manga) Delete(ctx context.Context, id guuid.UUID) error {
 }
 
 func handleNotFoundError(err error) error {
-	if err != nil {
-		if errors.As(err, &apperror.DBError{}) {
-			dbErr := err.(apperror.DBError)
-			switch {
-			case errors.Is(dbErr.Err, apperror.ErrNotFound):
-				return models.ErrMangaNotFound
-			default:
-				return err
-			}
-		}
+	if errors.Is(err, apperror.ErrNotFound) {
+		return models.ErrMangaNotFound
 	}
-
-	return nil
+	return err
 }

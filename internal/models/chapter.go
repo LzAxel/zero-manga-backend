@@ -1,9 +1,14 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+)
+
+var (
+	ErrChapterNotFound = errors.New("Chapter not found")
 )
 
 // TODO: create output struct with user name

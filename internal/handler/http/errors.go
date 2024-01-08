@@ -45,9 +45,10 @@ func (h *Handler) newErrorResponse(ctx echo.Context, code int, err string) error
 }
 
 func (h *Handler) newAppErrorResponse(ctx echo.Context, err error) error {
+	dbErr := apperror.DBError{}
+
 	switch {
-	case errors.As(err, &apperror.DBError{}):
-		dbErr := err.(apperror.DBError)
+	case errors.As(err, &dbErr):
 		h.logger.Error(dbErr.Err.Error(), map[string]interface{}{
 			"service": dbErr.Service,
 			"func":    dbErr.Func,

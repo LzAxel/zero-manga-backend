@@ -118,6 +118,10 @@ func (h *Handler) getChapterByManga(ctx echo.Context) error {
 		Offset: reqPagination.Offset(),
 	}, mangaID)
 	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrMangaNotFound):
+			return h.newErrorResponse(ctx, http.StatusNotFound, models.ErrMangaNotFound.Error())
+		}
 		return h.newAppErrorResponse(ctx, err)
 	}
 
@@ -137,6 +141,10 @@ func (h *Handler) getChapter(ctx echo.Context) error {
 
 	chapter, err := h.services.Chapter.Get(ctx.Request().Context(), mangaID)
 	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrChapterNotFound):
+			return h.newErrorResponse(ctx, http.StatusNotFound, models.ErrChapterNotFound.Error())
+		}
 		return h.newAppErrorResponse(ctx, err)
 	}
 

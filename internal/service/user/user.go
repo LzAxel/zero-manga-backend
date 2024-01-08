@@ -46,17 +46,8 @@ func (u *User) GetAll(ctx context.Context, pagination models.Pagination, filters
 }
 
 func handleNotFoundError(err error) error {
-	if err != nil {
-		if errors.As(err, &apperror.DBError{}) {
-			dbErr := err.(apperror.DBError)
-			switch {
-			case errors.Is(dbErr.Err, apperror.ErrNotFound):
-				return models.ErrUserNotFound
-			default:
-				return err
-			}
-		}
+	if errors.Is(err, apperror.ErrNotFound) {
+		return models.ErrUserNotFound
 	}
-
-	return nil
+	return err
 }

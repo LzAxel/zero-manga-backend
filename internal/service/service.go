@@ -58,7 +58,7 @@ func New(
 	return &Services{
 		User:          user.New(ctx, repository.User),
 		Manga:         manga.New(ctx, repository.Manga, repository.Chapter, uploader),
-		Chapter:       chapter.New(ctx, repository.Chapter, repository.Page, uploader),
+		Chapter:       chapter.New(ctx, repository.Chapter, repository.Page, repository.Manga, uploader),
 		Authorization: auth.New(ctx, jwt, repository.User),
 	}
 }

@@ -2,6 +2,8 @@ package manga
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -60,7 +62,7 @@ func (m *MangaPosgresql) Create(ctx context.Context, manga models.Manga) error {
 			}
 		}
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Manga",
 			"Create",
 			query,
@@ -96,8 +98,12 @@ func (m *MangaPosgresql) GetOne(ctx context.Context, filters models.MangaFilters
 
 	var manga models.Manga
 	if err := m.db.GetContext(ctx, &manga, queryString, args...); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return manga, apperror.ErrNotFound
+		}
 		return manga, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Manga",
 			"GetOne",
 			queryString,
@@ -124,7 +130,7 @@ func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPaginat
 	var users = make([]models.Manga, 0)
 	if err := m.db.SelectContext(ctx, &users, queryString, args...); err != nil {
 		return users, count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Manga",
 			"GetAll",
 			queryString,
@@ -142,7 +148,7 @@ func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPaginat
 
 	if err := m.db.GetContext(ctx, &count, queryString, args...); err != nil {
 		return users, count, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Manga",
 			"GetAll",
 			queryString,
@@ -229,7 +235,7 @@ func (m *MangaPosgresql) Update(ctx context.Context, manga models.UpdateMangaRec
 			}
 		}
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Manga",
 			"Update",
 			queryString,
@@ -249,7 +255,7 @@ func (m *MangaPosgresql) Delete(ctx context.Context, id uuid.UUID) error {
 
 	if _, err := m.db.ExecContext(ctx, queryString, args...); err != nil {
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Manga",
 			"Delete",
 			queryString,

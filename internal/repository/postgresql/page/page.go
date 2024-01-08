@@ -32,7 +32,7 @@ func (p *PagePosgresql) GetAllByChapter(ctx context.Context, chapterID uuid.UUID
 	var pages []models.Page
 	if err := p.db.SelectContext(ctx, &pages, query, args...); err != nil {
 		return nil, apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Page",
 			"GetAllByChapter",
 			query,
@@ -66,7 +66,7 @@ func (p *PagePosgresql) Create(ctx context.Context, page models.Page) error {
 
 	if _, err := p.db.ExecContext(ctx, query, args...); err != nil {
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Page",
 			"Create",
 			query,
@@ -84,7 +84,7 @@ func (p *PagePosgresql) Delete(ctx context.Context, id uuid.UUID) error {
 		ToSql()
 	if _, err := p.db.ExecContext(ctx, query, args...); err != nil {
 		return apperror.NewDBError(
-			postgresql.HandleDBError(err),
+			err,
 			"Page",
 			"Delete",
 			query,
