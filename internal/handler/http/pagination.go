@@ -1,22 +1,38 @@
 package http
 
 import (
+	"errors"
+	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 )
 
+var (
+	ErrInvalidPage      = errors.New("Invalid page query parameter")
+	ErrInvalidPageLimit = errors.New("Invalid page_limit query parameter")
+)
+
 func (h *Handler) WithPagination() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			page, err := strconv.ParseUint(c.QueryParam("page"), 10, 64)
-			if err != nil {
-				page = 1
+			pageParam := c.QueryParam("page")
+			if pageParam == "" {
+				pageParam = "1"
 			}
-			pageLimit, err := strconv.ParseUint(c.QueryParam("page_limit"), 10, 64)
+			page, err := strconv.ParseUint(pageParam, 10, 64)
 			if err != nil {
-				pageLimit = models.DefaultLimit
+				return h.newValidationErrorResponse(c, http.StatusBadRequest, ErrInvalidPage)
+			}
+
+			pageLimitParam := c.QueryParam("page_limit")
+			if pageLimitParam == "" {
+				pageLimitParam = strconv.Itoa(models.DefaultLimit)
+			}
+			pageLimit, err := strconv.ParseUint(pageLimitParam, 10, 64)
+			if err != nil {
+				return h.newValidationErrorResponse(c, http.StatusBadRequest, ErrInvalidPageLimit)
 			}
 
 			pagination, err := models.NewPagination(page, pageLimit)
