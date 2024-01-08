@@ -3,19 +3,26 @@ package models
 import (
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/samber/lo"
 )
 
 const (
-	MaxMangaPreviewFileSize = (1 << 20) * 2  // 2 MB
-	MaxMangaPageZipFileSize = (1 << 20) * 20 // 20 MB
+	MaxMangaPreviewFileSize   = (1 << 20) * 2   // 2 MB
+	MaxMangaPageZipFileSize   = (1 << 20) * 20  // 20 MB
+	MaxMangaPageZipReaderSize = (1 << 20) * 100 // 100 MB
 )
 
 var (
 	ErrInvalidFileExt = errors.New("invalid file extension")
 )
+
+type UploadReader struct {
+	Reader   io.Reader
+	Filename string
+}
 
 type UploadFile struct {
 	Data     []byte

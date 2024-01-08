@@ -43,10 +43,10 @@ type ChapterFilter struct {
 }
 
 type CreateChapterInput struct {
-	MangaID         uuid.UUID
-	UploaderID      uuid.UUID
-	Title           *string
-	Number          uint
-	Volume          uint
-	PageArchiveFile UploadFile // .zip file cantain pages
+	MangaID     uuid.UUID
+	UploaderID  uuid.UUID
+	Title       *string
+	Number      uint
+	Volume      uint
+	PageArchive UploadReader // .zip file cantain pages
 }

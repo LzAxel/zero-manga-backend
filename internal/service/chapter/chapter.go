@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"path/filepath"
-	"slices"
 
 	"github.com/google/uuid"
 	"github.com/lzaxel/zero-manga-backend/internal/apperror"
@@ -55,13 +52,6 @@ func (c *Chapter) Create(ctx context.Context, chapter models.CreateChapterInput)
 		return fmt.Errorf("Chapter.Create: manga.GetOne: %w", err)
 	}
 
-	zip, err := file.GetFilesFromZip(chapter.PageArchiveFile.Data)
-	if err != nil {
-		return fmt.Errorf("Chapter.Create: file.GetFilesFromZip: %w", err)
-	}
-
-	file.SortZipFilesNumerically(zip)
-
 	dto := models.Chapter{
 		ID:         uuid.New(),
 		MangaID:    chapter.MangaID,
@@ -72,56 +62,33 @@ func (c *Chapter) Create(ctx context.Context, chapter models.CreateChapterInput)
 		UploadedAt: clock.Now(),
 	}
 
-	// TODO: remove using 2 loop
-	var pageCount uint
-	for _, file := range zip {
-		if isValidPageExtensions(file.Name) {
-			pageCount++
-		}
+	zip, err := file.GetFilesFromZip(chapter.PageArchive.Reader)
+	if err != nil {
+		return fmt.Errorf("Chapter.CreatePagesFromZip: file.GetFilesFromZip: %w", err)
 	}
+
+	// TODO: remove using 2 loop
+	var pageCount uint = countValidImagesInZip(zip)
 	if pageCount < 1 {
 		return fmt.Errorf("Chapter.Create: %w", models.ErrNoValidImages)
 	}
 	dto.PageCount = pageCount
 
+	file.SortZipFilesNumerically(zip)
+
+	// TODO: add transaction
 	err = c.repo.Create(ctx, dto)
 	if err != nil {
-		return fmt.Errorf("Chapter.Create: Create: %w", err)
+		return fmt.Errorf("Chapter.Create: Create chapter: %w", err)
 	}
 
-	for i, file := range zip {
-		if !isValidPageExtensions(file.Name) {
-			continue
-		}
-		fileReader, err := file.Open()
-		if err != nil {
-			return fmt.Errorf("Chapter.Create: Open file: %w", err)
-		}
-		defer fileReader.Close()
-		fileBytes, err := io.ReadAll(fileReader)
-		if err != nil {
-			return fmt.Errorf("Chapter.Create: Read file: %w", err)
-		}
-
-		uploadedPageFile, err := c.uploader.UploadPage(ctx, chapter.MangaID, dto.ID, models.UploadFile{
-			Filename: file.Name,
-			Data:     fileBytes,
-		})
-		if err != nil {
-			return fmt.Errorf("Chapter.Create: UploadPage: %w", err)
-		}
-
-		err = c.pageRepo.Create(ctx, models.Page{
-			ID:        uuid.New(),
-			ChapterID: dto.ID,
-			URL:       uploadedPageFile.URL,
-			// TODO: add height and width
-			Number:    i + 1,
-			CreatedAt: clock.Now(),
-		})
-		if err != nil {
-			return fmt.Errorf("Chapter.Create: Create page: %w", err)
-		}
+	err = c.CreatePagesFromZip(ctx, CreatePagesFromZipInput{
+		ChapterID: dto.ID,
+		MangaID:   dto.MangaID,
+		Files:     zip,
+	})
+	if err != nil {
+		return fmt.Errorf("Chapter.Create: %w", err)
 	}
 
 	return nil
@@ -161,10 +128,6 @@ func (c *Chapter) Get(ctx context.Context, chapterID uuid.UUID) (models.ChapterO
 		PageCount:  chapter.PageCount,
 		Pages:      pages,
 	}, nil
-}
-
-func isValidPageExtensions(filename string) bool {
-	return slices.Contains(validPageExtensions, filepath.Ext(filename))
 }
 
 func handleNotFoundError(err error) error {

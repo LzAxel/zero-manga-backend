@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"io"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -29,7 +30,11 @@ func (nf ByNumericalFilename) Less(i, j int) bool {
 	return a < b
 }
 
-func GetFilesFromZip(zipBytes []byte) ([]*zip.File, error) {
+func GetFilesFromZip(fileReader io.Reader) ([]*zip.File, error) {
+	zipBytes, err := io.ReadAll(fileReader)
+	if err != nil {
+		return []*zip.File{}, fmt.Errorf("GetFilesFromZip: failed to read file: %w", err)
+	}
 	zipReader, err := zip.NewReader(bytes.NewReader(zipBytes), int64(len(zipBytes)))
 	if err != nil {
 		return []*zip.File{}, fmt.Errorf("GetFilesFromZip: failed to create zip reader: %w", err)

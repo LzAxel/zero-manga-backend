@@ -49,6 +49,7 @@ func (h *Handler) createChapter(ctx echo.Context) error {
 	}
 
 	file, err := reqInput.PagesZipFile.Open()
+	defer file.Close()
 	if err != nil {
 		return h.newAppErrorResponse(ctx,
 			apperror.NewAppError(
@@ -58,16 +59,7 @@ func (h *Handler) createChapter(ctx echo.Context) error {
 				map[string]any{"file": reqInput.PagesZipFile.Filename},
 			))
 	}
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		return h.newAppErrorResponse(ctx,
-			apperror.NewAppError(
-				fmt.Errorf("failed to read pages zip file: %w", err),
-				"Chapter",
-				"createChapter",
-				map[string]any{"file": reqInput.PagesZipFile.Filename},
-			))
-	}
+	zipReader := io.LimitReader(file, models.MaxMangaPageZipReaderSize)
 
 	mangaID, err := uuid.Parse(reqInput.MangaID)
 	if err != nil {
@@ -79,12 +71,15 @@ func (h *Handler) createChapter(ctx echo.Context) error {
 	}
 
 	input := models.CreateChapterInput{
-		MangaID:         mangaID,
-		UploaderID:      user.ID,
-		Title:           reqInput.Title,
-		Number:          reqInput.Number,
-		Volume:          reqInput.Volume,
-		PageArchiveFile: models.UploadFile{Data: fileBytes, Filename: reqInput.PagesZipFile.Filename},
+		MangaID:    mangaID,
+		UploaderID: user.ID,
+		Title:      reqInput.Title,
+		Number:     reqInput.Number,
+		Volume:     reqInput.Volume,
+		PageArchive: models.UploadReader{
+			Reader:   zipReader,
+			Filename: reqInput.PagesZipFile.Filename,
+		},
 	}
 
 	err = h.services.Chapter.Create(ctx.Request().Context(), input)
