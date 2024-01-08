@@ -47,9 +47,17 @@ var (
 )
 
 func (c *Chapter) Create(ctx context.Context, chapter models.CreateChapterInput) error {
+	_, err := c.mangaRepo.GetOne(ctx, models.MangaFilters{ID: &chapter.MangaID})
+	if err != nil {
+		if errors.Is(err, apperror.ErrNotFound) {
+			return models.ErrMangaNotFound
+		}
+		return fmt.Errorf("Chapter.Create: manga.GetOne: %w", err)
+	}
+
 	zip, err := file.GetFilesFromZip(chapter.PageArchiveFile.Data)
 	if err != nil {
-		return fmt.Errorf("Chapter.Create: GetFilesFromZip: %w", err)
+		return fmt.Errorf("Chapter.Create: file.GetFilesFromZip: %w", err)
 	}
 
 	file.SortZipFilesNumerically(zip)
@@ -70,6 +78,9 @@ func (c *Chapter) Create(ctx context.Context, chapter models.CreateChapterInput)
 		if isValidPageExtensions(file.Name) {
 			pageCount++
 		}
+	}
+	if pageCount < 1 {
+		return fmt.Errorf("Chapter.Create: %w", models.ErrNoValidImages)
 	}
 	dto.PageCount = pageCount
 

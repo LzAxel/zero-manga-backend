@@ -9,6 +9,7 @@ import (
 
 var (
 	ErrChapterNotFound = errors.New("Chapter not found")
+	ErrNoValidImages   = errors.New("No images with valid extension found")
 )
 
 // TODO: create output struct with user name

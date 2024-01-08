@@ -89,7 +89,13 @@ func (h *Handler) createChapter(ctx echo.Context) error {
 
 	err = h.services.Chapter.Create(ctx.Request().Context(), input)
 	if err != nil {
-		return h.newAppErrorResponse(ctx, errors.Unwrap(err))
+		switch {
+		case errors.Is(err, models.ErrMangaNotFound):
+			return h.newErrorResponse(ctx, http.StatusNotFound, models.ErrMangaNotFound.Error())
+		case errors.Is(err, models.ErrNoValidImages):
+			return h.newValidationErrorResponse(ctx, http.StatusBadRequest, models.ErrNoValidImages)
+		}
+		return h.newAppErrorResponse(ctx, err)
 	}
 
 	ctx.NoContent(http.StatusCreated)
