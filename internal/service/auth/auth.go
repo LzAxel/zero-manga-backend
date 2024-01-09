@@ -29,6 +29,12 @@ func New(ctx context.Context, jwt *jwt.JWT, userRepo repository.User) *Authoriza
 func (a *Authorization) RefreshTokens(ctx context.Context, refreshToken string) (jwt.TokenPair, error) {
 	claims, err := a.jwt.ValidateToken(refreshToken)
 	if err != nil {
+		switch {
+		case errors.Is(err, jwt.ErrInvalidToken) || errors.Is(err, jwt.ErrInvalidClaims):
+			return jwt.TokenPair{}, jwt.ErrInvalidToken
+		case errors.Is(err, jwt.ErrTokenExpired):
+			return jwt.TokenPair{}, jwt.ErrTokenExpired
+		}
 		return jwt.TokenPair{}, fmt.Errorf("Authorization.RefreshTokens: %w", err)
 	}
 

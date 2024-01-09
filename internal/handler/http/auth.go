@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/lzaxel/zero-manga-backend/internal/jwt"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 )
 
@@ -111,8 +112,10 @@ func (h *Handler) refreshTokens(ctx echo.Context) error {
 	tokenPair, err := h.services.Authorization.RefreshTokens(ctx.Request().Context(), req.RefreshToken)
 	if err != nil {
 		switch {
-		case errors.Is(err, models.ErrInvalidCredentials):
-			return h.newAuthErrorResponse(ctx, http.StatusUnauthorized, models.ErrInvalidCredentials)
+		case errors.Is(err, jwt.ErrInvalidToken):
+			return h.newAuthErrorResponse(ctx, http.StatusUnauthorized, jwt.ErrInvalidToken)
+		case errors.Is(err, jwt.ErrTokenExpired):
+			return h.newAuthErrorResponse(ctx, http.StatusUnauthorized, jwt.ErrTokenExpired)
 		default:
 			return h.newAppErrorResponse(ctx, err)
 		}
