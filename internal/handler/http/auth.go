@@ -106,14 +106,14 @@ func (h *Handler) refreshTokens(ctx echo.Context) error {
 	var req refreshRequest
 
 	if err := ctx.Bind(&req); err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, jwt.ErrInvalidToken)
 	}
 
 	tokenPair, err := h.services.Authorization.RefreshTokens(ctx.Request().Context(), req.RefreshToken)
 	if err != nil {
 		switch {
 		case errors.Is(err, jwt.ErrInvalidToken):
-			return h.newAuthErrorResponse(ctx, http.StatusUnauthorized, jwt.ErrInvalidToken)
+			return h.newValidationErrorResponse(ctx, http.StatusBadRequest, jwt.ErrInvalidToken)
 		case errors.Is(err, jwt.ErrTokenExpired):
 			return h.newAuthErrorResponse(ctx, http.StatusUnauthorized, jwt.ErrTokenExpired)
 		default:
