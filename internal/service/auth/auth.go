@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/lzaxel/zero-manga-backend/internal/apperror"
 	"github.com/lzaxel/zero-manga-backend/internal/jwt"
@@ -25,29 +26,43 @@ func New(ctx context.Context, jwt *jwt.JWT, userRepo repository.User) *Authoriza
 	}
 }
 
-func (a *Authorization) Login(ctx context.Context, input models.LoginUserInput) (string, error) {
+func (a *Authorization) RefreshTokens(ctx context.Context, refreshToken string) (jwt.TokenPair, error) {
+	claims, err := a.jwt.ValidateToken(refreshToken)
+	if err != nil {
+		return jwt.TokenPair{}, fmt.Errorf("Authorization.RefreshTokens: %w", err)
+	}
+
+	tokenPair, err := a.jwt.GeneratePair(claims.Subject)
+	if err != nil {
+		return jwt.TokenPair{}, fmt.Errorf("Authorization.RefreshTokens: %w", err)
+	}
+
+	return tokenPair, err
+}
+
+func (a *Authorization) Login(ctx context.Context, input models.LoginUserInput) (jwt.TokenPair, error) {
 	user, err := a.userRepo.GetByUsername(ctx, input.Username)
 	if err != nil {
 		if errors.As(err, &apperror.DBError{}) {
 			dbErr := err.(apperror.DBError)
 			if errors.Is(dbErr.Err, apperror.ErrNotFound) {
-				return "", models.ErrInvalidCredentials
+				return jwt.TokenPair{}, models.ErrInvalidCredentials
 			}
 		}
 
-		return "", err
+		return jwt.TokenPair{}, err
 	}
 
 	if err := hash.Compare(user.PasswordHash, input.Password); err != nil {
-		return "", models.ErrInvalidCredentials
+		return jwt.TokenPair{}, models.ErrInvalidCredentials
 	}
 
-	token, err := a.jwt.GenerateAccessToken(user.ID)
+	tokenPair, err := a.jwt.GeneratePair(user.ID)
 	if err != nil {
-		return "", err
+		return jwt.TokenPair{}, err
 	}
 
-	return token, err
+	return tokenPair, err
 }
 func (a *Authorization) Register(ctx context.Context, input models.CreateUserInput) error {
 	passwordHash, err := hash.Hash(input.Password)

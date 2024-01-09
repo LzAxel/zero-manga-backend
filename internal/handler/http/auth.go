@@ -59,8 +59,9 @@ type signInRequest struct {
 	Password string `json:"password"`
 }
 
-type signInResponse struct {
-	Token string `json:"token"`
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (h *Handler) signIn(ctx echo.Context) error {
@@ -78,7 +79,7 @@ func (h *Handler) signIn(ctx echo.Context) error {
 		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
 	}
 
-	token, err := h.services.Authorization.Login(ctx.Request().Context(), input)
+	tokenPair, err := h.services.Authorization.Login(ctx.Request().Context(), input)
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrInvalidCredentials):
@@ -88,7 +89,39 @@ func (h *Handler) signIn(ctx echo.Context) error {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, signInResponse{Token: token})
+	ctx.JSON(http.StatusOK, TokenResponse{
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+	})
+
+	return nil
+}
+
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (h *Handler) refreshTokens(ctx echo.Context) error {
+	var req refreshRequest
+
+	if err := ctx.Bind(&req); err != nil {
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+	}
+
+	tokenPair, err := h.services.Authorization.RefreshTokens(ctx.Request().Context(), req.RefreshToken)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrInvalidCredentials):
+			return h.newAuthErrorResponse(ctx, http.StatusUnauthorized, models.ErrInvalidCredentials)
+		default:
+			return h.newAppErrorResponse(ctx, err)
+		}
+	}
+
+	ctx.JSON(http.StatusOK, TokenResponse{
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+	})
 
 	return nil
 }

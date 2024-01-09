@@ -16,8 +16,9 @@ import (
 )
 
 type Authorization interface {
-	Login(ctx context.Context, input models.LoginUserInput) (string, error)
+	Login(ctx context.Context, input models.LoginUserInput) (jwt.TokenPair, error)
 	Register(ctx context.Context, input models.CreateUserInput) error
+	RefreshTokens(ctx context.Context, refreshToken string) (jwt.TokenPair, error)
 }
 
 type User interface {

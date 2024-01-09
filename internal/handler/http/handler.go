@@ -62,6 +62,7 @@ func (h *Handler) initRoutes() {
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
+		auth.POST("/refresh", h.refreshTokens)
 	}
 
 	user := v1.Group("/user", h.Authorized())
