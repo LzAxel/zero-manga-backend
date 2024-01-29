@@ -87,6 +87,14 @@ func (h *Handler) initRoutes() {
 		chapter.GET("/all/:manga_id", h.getChapterByManga, h.WithPagination())
 		chapter.GET("/:id", h.getChapter)
 	}
+
+	tag := v1.Group("/tag")
+	{
+		tag.POST("", h.createTag, h.Authorized(), h.RequireUserType(models.UserTypeAdmin))
+		tag.GET("", h.getAllTags)
+		tag.PATCH("/:id", h.updateTag, h.Authorized(), h.RequireUserType(models.UserTypeAdmin))
+		tag.DELETE("/:id", h.deleteTag, h.Authorized(), h.RequireUserType(models.UserTypeAdmin))
+	}
 }
 
 func (h *Handler) Stop(ctx context.Context) error {

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/tag"
 
 	"github.com/google/uuid"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
@@ -44,11 +45,19 @@ type Page interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
+type Tag interface {
+	Create(ctx context.Context, tag models.Tag) error
+	GetAll(ctx context.Context) ([]models.Tag, error)
+	Update(ctx context.Context, tag models.UpdateTagRecord) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
 type Repository struct {
 	User
 	Manga
 	Chapter
 	Page
+	Tag
 }
 
 func New(ctx context.Context, psql postgresql.PostgresqlRepository, logger logger.Logger) *Repository {
@@ -57,5 +66,6 @@ func New(ctx context.Context, psql postgresql.PostgresqlRepository, logger logge
 		Manga:   manga.New(ctx, psql.DB),
 		Chapter: chapter.New(ctx, psql.DB),
 		Page:    page.New(ctx, psql.DB),
+		Tag:     tag.New(ctx, psql.DB),
 	}
 }

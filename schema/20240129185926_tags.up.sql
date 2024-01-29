@@ -1,0 +1,12 @@
+CREATE TABLE tag(
+  id UUID PRIMARY KEY,
+  name VARCHAR(30) NOT NULL UNIQUE,
+  slug TEXT NOT NULL UNIQUE,
+  is_nsfw BOOLEAN NOT NULL,
+  created_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE manga_tags(
+    manga_id UUID REFERENCES manga (id) NOT NULL,
+    tag_id UUID REFERENCES tag (id) NOT NULL
+);

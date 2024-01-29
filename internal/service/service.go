@@ -11,6 +11,7 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/service/auth"
 	"github.com/lzaxel/zero-manga-backend/internal/service/chapter"
 	"github.com/lzaxel/zero-manga-backend/internal/service/manga"
+	"github.com/lzaxel/zero-manga-backend/internal/service/tag"
 	"github.com/lzaxel/zero-manga-backend/internal/service/uploader"
 	"github.com/lzaxel/zero-manga-backend/internal/service/user"
 )
@@ -41,12 +42,18 @@ type Chapter interface {
 	GetAllByManga(ctx context.Context, pagination models.DBPagination, mangaID uuid.UUID) ([]models.Chapter, uint64, error)
 	Get(ctx context.Context, chapterID uuid.UUID) (models.ChapterOutput, error)
 }
-
+type Tag interface {
+	Create(ctx context.Context, tag models.CreateTagInput) error
+	Update(ctx context.Context, tag models.UpdateTagInput) error
+	GetAll(ctx context.Context) ([]models.Tag, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+}
 type Services struct {
 	User
 	Manga
 	Chapter
 	Authorization
+	Tag
 }
 
 func New(
@@ -61,5 +68,6 @@ func New(
 		Manga:         manga.New(ctx, repository.Manga, repository.Chapter, uploader),
 		Chapter:       chapter.New(ctx, repository.Chapter, repository.Page, repository.Manga, uploader),
 		Authorization: auth.New(ctx, jwt, repository.User),
+		Tag:           tag.New(repository.Tag),
 	}
 }
