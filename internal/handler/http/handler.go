@@ -87,6 +87,12 @@ func (h *Handler) initRoutes() {
 		chapter.GET("/all/:manga_id", h.getChapterByManga, h.WithPagination())
 		chapter.GET("/:id", h.getChapter)
 	}
+	grade := v1.Group("/grade", h.Authorized())
+	{
+		grade.POST("", h.createGrade, h.Authorized())
+		grade.GET("/user/:id", h.getGradesByUserID, h.WithPagination())
+		grade.DELETE("/:id", h.deleteGrade)
+	}
 }
 
 func (h *Handler) Stop(ctx context.Context) error {

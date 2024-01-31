@@ -16,6 +16,7 @@ const (
 	MangaTable   = "manga"
 	ChapterTable = "chapter"
 	PageTable    = "page"
+	GradeTable   = "grade"
 )
 
 func GetPgError(err error) *pgconn.PgError {
@@ -46,7 +47,7 @@ type PostgresqlRepository struct {
 	db *sqlx.DB
 }
 
-func New(ctx context.Context, config Config) (PostgresqlRepository, error) {
+func New(config Config) (PostgresqlRepository, error) {
 	db, err := sqlx.Open("pgx", formatConnectionUrl(config))
 	if err != nil {
 		return PostgresqlRepository{}, fmt.Errorf("failed to connect to database: %w", err)

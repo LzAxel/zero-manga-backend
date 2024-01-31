@@ -19,7 +19,7 @@ func (h *Handler) getAllUsers(ctx echo.Context) error {
 
 	err := ctx.Bind(&filters)
 	if err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid filters"))
 	}
 
 	reqPagination, err := getPaginationFromContext(ctx)

@@ -25,7 +25,7 @@ func (h *Handler) signUp(ctx echo.Context) error {
 	var req signUpRequest
 
 	if err := ctx.Bind(&req); err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid input"))
 	}
 
 	input, err := models.NewCreateUserInput(
@@ -69,7 +69,7 @@ func (h *Handler) signIn(ctx echo.Context) error {
 	var req signInRequest
 
 	if err := ctx.Bind(&req); err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid input"))
 	}
 
 	input, err := models.NewLoginUserInput(

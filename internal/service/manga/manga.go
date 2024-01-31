@@ -24,13 +24,20 @@ type Uploader interface {
 type Manga struct {
 	repo         repository.Manga
 	chaptersRepo repository.Chapter
+	gradeRepo    repository.Grade
 	uploader     Uploader
 }
 
-func New(ctx context.Context, repository repository.Manga, chaptersRepo repository.Chapter, uploader Uploader) *Manga {
+func New(
+	repository repository.Manga,
+	chaptersRepo repository.Chapter,
+	gradeRepo repository.Grade,
+	uploader Uploader,
+) *Manga {
 	return &Manga{
 		repo:         repository,
 		chaptersRepo: chaptersRepo,
+		gradeRepo:    gradeRepo,
 		uploader:     uploader,
 	}
 }
@@ -138,6 +145,11 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 		return models.MangaOutput{}, err
 	}
 
+	avgGrade, gradeCount, err := m.gradeRepo.GetInfoByManga(ctx, manga.ID)
+	if err != nil {
+		return models.MangaOutput{}, err
+	}
+
 	return models.MangaOutput{
 		ID:             manga.ID,
 		Title:          manga.Title,
@@ -150,6 +162,10 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 		ReleaseYear:    manga.ReleaseYear,
 		PreviewURL:     manga.PreviewURL,
 		ChaptersCount:  chaptersCount,
+		Grade: models.GradeInfo{
+			AvgGrade: avgGrade,
+			Count:    gradeCount,
+		},
 	}, nil
 }
 func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filters models.MangaGetAllFilters) ([]models.MangaOutput, uint64, error) {
@@ -161,6 +177,11 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 	newManga := make([]models.MangaOutput, len(mangaList))
 	for i, manga := range mangaList {
 		chaptersCount, err := m.chaptersRepo.CountByManga(ctx, manga.ID)
+		if err != nil {
+			return []models.MangaOutput{}, 0, err
+		}
+
+		avgGrade, gradeCount, err := m.gradeRepo.GetInfoByManga(ctx, manga.ID)
 		if err != nil {
 			return []models.MangaOutput{}, 0, err
 		}
@@ -177,6 +198,10 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 			ReleaseYear:    manga.ReleaseYear,
 			PreviewURL:     manga.PreviewURL,
 			ChaptersCount:  chaptersCount,
+			Grade: models.GradeInfo{
+				AvgGrade: avgGrade,
+				Count:    gradeCount,
+			},
 		}
 	}
 

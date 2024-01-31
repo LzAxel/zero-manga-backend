@@ -33,7 +33,7 @@ func New(config config.Config) *App {
 	}
 
 	logger.Infof("connecting to postgresql on %s:%d", config.Postgresql.Host, config.Postgresql.Port)
-	psql, err := postgresql.New(ctx, config.Postgresql)
+	psql, err := postgresql.New(config.Postgresql)
 	if err != nil {
 		logger.Fatalf("connect to postgresql: %s", err)
 	}
@@ -46,7 +46,7 @@ func New(config config.Config) *App {
 	go fileStorage.Serve()
 
 	jwt := jwt.New(config.JWT)
-	repository := repository.New(ctx, psql, logger)
+	repository := repository.New(psql, logger)
 	services := service.New(ctx, repository, jwt, fileStorage)
 	handler := http.New(config.Server, services, logger, jwt)
 

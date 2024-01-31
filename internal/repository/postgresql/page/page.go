@@ -14,7 +14,7 @@ type PagePosgresql struct {
 	db postgresql.DB
 }
 
-func New(ctx context.Context, db postgresql.DB) *PagePosgresql {
+func New(db postgresql.DB) *PagePosgresql {
 	return &PagePosgresql{
 		db: db,
 	}

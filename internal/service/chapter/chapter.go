@@ -25,7 +25,7 @@ type Chapter struct {
 	uploader  Uploader
 }
 
-func New(ctx context.Context,
+func New(
 	repository repository.Chapter,
 	pageRepo repository.Page,
 	mangaRepo repository.Manga,
