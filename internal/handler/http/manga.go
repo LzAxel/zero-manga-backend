@@ -29,7 +29,7 @@ func (h *Handler) createManga(ctx echo.Context) error {
 
 	err := ctx.Bind(&reqInput)
 	if err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid input"))
 	}
 
 	reqInput.PreviewFile, err = ctx.FormFile("preview_file")
@@ -111,7 +111,7 @@ func (h *Handler) getAllManga(ctx echo.Context) error {
 
 	err := ctx.Bind(&filters)
 	if err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid filters"))
 	}
 
 	reqPagination, err := getPaginationFromContext(ctx)
@@ -147,7 +147,7 @@ func (h *Handler) getManga(ctx echo.Context) error {
 
 	err := ctx.Bind(&filters)
 	if err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("Invalid filters"))
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid filters"))
 	}
 
 	manga, err := h.services.Manga.GetOne(ctx.Request().Context(), filters)

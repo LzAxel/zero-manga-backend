@@ -17,7 +17,7 @@ type UserPosgresql struct {
 	db postgresql.DB
 }
 
-func New(ctx context.Context, db postgresql.DB) *UserPosgresql {
+func New(db postgresql.DB) *UserPosgresql {
 	return &UserPosgresql{
 		db: db,
 	}
@@ -88,14 +88,15 @@ func (p *UserPosgresql) GetByID(ctx context.Context, id uuid.UUID) (models.User,
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			return user, apperror.ErrNotFound
+		default:
+			return user, apperror.NewDBError(
+				err,
+				"User",
+				"GetByID",
+				query,
+				args,
+			)
 		}
-		return user, apperror.NewDBError(
-			err,
-			"User",
-			"GetByID",
-			query,
-			args,
-		)
 	}
 
 	return user, nil

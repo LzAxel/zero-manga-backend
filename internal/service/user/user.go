@@ -14,7 +14,7 @@ type User struct {
 	repo repository.User
 }
 
-func New(ctx context.Context, repository repository.User) *User {
+func New(repository repository.User) *User {
 	return &User{
 		repo: repository,
 	}

@@ -16,7 +16,7 @@ type ChapterPosgresql struct {
 	db postgresql.DB
 }
 
-func New(ctx context.Context, db postgresql.DB) *ChapterPosgresql {
+func New(db postgresql.DB) *ChapterPosgresql {
 	return &ChapterPosgresql{
 		db: db,
 	}

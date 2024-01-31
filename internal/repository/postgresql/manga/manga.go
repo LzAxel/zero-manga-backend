@@ -17,7 +17,7 @@ type MangaPosgresql struct {
 	db postgresql.DB
 }
 
-func New(ctx context.Context, db postgresql.DB) *MangaPosgresql {
+func New(db postgresql.DB) *MangaPosgresql {
 	return &MangaPosgresql{
 		db: db,
 	}

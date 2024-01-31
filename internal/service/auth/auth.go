@@ -19,7 +19,7 @@ type Authorization struct {
 	userRepo repository.User
 }
 
-func New(ctx context.Context, jwt *jwt.JWT, userRepo repository.User) *Authorization {
+func New(jwt *jwt.JWT, userRepo repository.User) *Authorization {
 	return &Authorization{
 		jwt:      jwt,
 		userRepo: userRepo,

@@ -62,6 +62,7 @@ type MangaOutput struct {
 	AgeRestrict    AgeRestrict `json:"age_restrict"`
 	ReleaseYear    uint16      `json:"release_year"`
 	PreviewURL     string      `json:"preview_url"`
+	Grade          GradeInfo   `json:"grade"`
 }
 
 type UpdateMangaInput struct {

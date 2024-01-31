@@ -26,7 +26,7 @@ func (h *Handler) createChapter(ctx echo.Context) error {
 
 	err := ctx.Bind(&reqInput)
 	if err != nil {
-		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, errors.New("invalid input"))
 	}
 
 	reqInput.PagesZipFile, err = ctx.FormFile("pages_zip_file")
