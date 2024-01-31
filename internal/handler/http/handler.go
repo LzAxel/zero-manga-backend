@@ -89,7 +89,7 @@ func (h *Handler) initRoutes() {
 	}
 	grade := v1.Group("/grade", h.Authorized())
 	{
-		grade.POST("", h.createGrade, h.Authorized())
+		grade.POST("", h.createGrade)
 		grade.GET("/user/:id", h.getGradesByUserID, h.WithPagination())
 		grade.DELETE("/:id", h.deleteGrade)
 	}
