@@ -2,6 +2,7 @@ package tag
 
 import (
 	"context"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
@@ -43,7 +44,7 @@ func (t *TagPostresql) Create(ctx context.Context, tag models.Tag) error {
 		if pgErr != nil {
 			switch {
 			case pgErr.Code == pgerrcode.UniqueViolation:
-				return models.ErrTagExists
+				return models.ErrTagDuplicated
 			}
 		}
 
@@ -97,7 +98,7 @@ func (t *TagPostresql) Update(ctx context.Context, tag models.UpdateTagRecord) e
 		if pgErr != nil {
 			switch {
 			case pgErr.Code == pgerrcode.UniqueViolation:
-				return models.ErrTagExists
+				return models.ErrTagDuplicated
 			}
 		}
 		return apperror.NewDBError(

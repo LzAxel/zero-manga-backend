@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	ErrTagExists   = errors.New("Tag already exitst")
-	ErrTagNotFound = errors.New("Tag not found")
+	ErrTagDuplicated = errors.New("tag duplicated")
+	ErrTagNotFound   = errors.New("tag not found")
 )
 
 type Tag struct {

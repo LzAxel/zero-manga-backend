@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/lzaxel/zero-manga-backend/internal/apperror"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
 	"github.com/lzaxel/zero-manga-backend/internal/repository"
@@ -35,8 +36,8 @@ func (t *Tag) Create(ctx context.Context, tag models.CreateTagInput) error {
 	err := t.repo.Create(ctx, dto)
 	if err != nil {
 		switch {
-		case errors.Is(err, models.ErrTagExists):
-			return models.ErrTagExists
+		case errors.Is(err, models.ErrTagDuplicated):
+			return models.ErrTagDuplicated
 		default:
 			return apperror.NewAppError(
 				fmt.Errorf("failed to create tag: %w", err),

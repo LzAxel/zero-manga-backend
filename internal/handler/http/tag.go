@@ -31,7 +31,7 @@ func (h *Handler) createTag(ctx echo.Context) error {
 	err = h.services.Tag.Create(ctx.Request().Context(), input)
 	if err != nil {
 		switch {
-		case errors.Is(err, models.ErrTagExists):
+		case errors.Is(err, models.ErrTagDuplicated):
 			return h.newErrorResponse(ctx, http.StatusConflict, err.Error())
 		default:
 			return h.newAppErrorResponse(ctx, err)
