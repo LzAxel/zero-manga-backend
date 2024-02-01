@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ErrTagDuplicated = errors.New("tag duplicated")
-	ErrTagNotFound   = errors.New("tag not found")
+	ErrTagDuplicated      = errors.New("tag duplicated")
+	ErrTagNotFound        = errors.New("tag not found")
+	ErrMangaOrTagNotFound = errors.New("manga or tag not found")
 )
 
 type Tag struct {
@@ -19,6 +20,11 @@ type Tag struct {
 	Slug      string    `db:"slug" json:"slug"`
 	IsNSFW    bool      `db:"is_nsfw" json:"is_nsfw"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
+}
+
+type MangaTagRelation struct {
+	MangaID uuid.UUID `db:"manga_id"`
+	TagID   uuid.UUID `db:"tag_id"`
 }
 
 type UpdateTagRecord struct {

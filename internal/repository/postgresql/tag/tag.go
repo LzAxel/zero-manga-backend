@@ -2,6 +2,8 @@ package tag
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -56,14 +58,39 @@ func (t *TagPostresql) Create(ctx context.Context, tag models.Tag) error {
 			args,
 		)
 	}
+
 	return nil
+}
+
+func (t *TagPostresql) GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.Tag, error) {
+	query, _, _ := squirrel.
+		Select("*").
+		From(postgresql.TagsTable).
+		Where(squirrel.Eq{"manga_id": mangaID}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+
+	var tags = make([]models.Tag, 0)
+	if err := t.db.SelectContext(ctx, &tags, query); err != nil {
+		return tags, apperror.NewDBError(
+			err,
+			"Tags",
+			"GetAllByMangaID",
+			query,
+			nil,
+		)
+	}
+
+	return tags, nil
 }
 
 func (t *TagPostresql) GetAll(ctx context.Context) ([]models.Tag, error) {
 	query, _, _ := squirrel.
 		Select("*").
 		From(postgresql.TagsTable).
+		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
+
 	var tags = make([]models.Tag, 0)
 	if err := t.db.SelectContext(ctx, &tags, query); err != nil {
 		return tags, apperror.NewDBError(
@@ -74,6 +101,7 @@ func (t *TagPostresql) GetAll(ctx context.Context) ([]models.Tag, error) {
 			nil,
 		)
 	}
+
 	return tags, nil
 }
 
@@ -82,17 +110,26 @@ func (t *TagPostresql) GetByID(ctx context.Context, id uuid.UUID) (models.Tag, e
 		Select("*").
 		From(postgresql.TagsTable).
 		Where(squirrel.Eq{"id": id}).
+		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
+
 	var tag = models.Tag{}
 	if err := t.db.GetContext(ctx, &tag, query, args...); err != nil {
-		return tag, apperror.NewDBError(
-			err,
-			"Tag",
-			"GetByID",
-			query,
-			args,
-		)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return tag, apperror.ErrNotFound
+		default:
+			return tag, apperror.NewDBError(
+				err,
+				"Tag",
+				"GetByID",
+				query,
+				args,
+			)
+
+		}
 	}
+
 	return tag, nil
 }
 
@@ -112,6 +149,7 @@ func (t *TagPostresql) Update(ctx context.Context, tag models.UpdateTagRecord) e
 		Where(squirrel.Eq{"id": tag.ID}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
+
 	if _, err := t.db.ExecContext(ctx, queryString, args...); err != nil {
 		pgErr := postgresql.GetPgError(err)
 		if pgErr != nil {
@@ -128,6 +166,7 @@ func (t *TagPostresql) Update(ctx context.Context, tag models.UpdateTagRecord) e
 			args,
 		)
 	}
+
 	return nil
 }
 
@@ -147,5 +186,6 @@ func (t *TagPostresql) Delete(ctx context.Context, id uuid.UUID) error {
 			args,
 		)
 	}
+
 	return nil
 }

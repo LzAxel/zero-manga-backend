@@ -62,6 +62,7 @@ type MangaOutput struct {
 	AgeRestrict    AgeRestrict `json:"age_restrict"`
 	ReleaseYear    uint16      `json:"release_year"`
 	PreviewURL     string      `json:"preview_url"`
+	Tags           []Tag       `json:"tags"`
 }
 
 type UpdateMangaInput struct {
@@ -74,6 +75,7 @@ type UpdateMangaInput struct {
 	AgeRestrict    *AgeRestrict
 	ReleaseYear    *uint16
 	PreviewFile    *UploadFile
+	Tags           *uuid.UUIDs
 }
 
 type UpdateMangaRecord struct {
@@ -99,8 +101,23 @@ func NewUpdateMangaInput(
 	ageRestrict *AgeRestrict,
 	releaseYear *uint16,
 	previewFile *UploadFile,
-) UpdateMangaInput {
-	return UpdateMangaInput{
+	tags *[]string,
+) (UpdateMangaInput, error) {
+	var (
+		err       error
+		tagsUUIDs uuid.UUIDs
+	)
+	if tags != nil {
+		tagsUUIDs = make(uuid.UUIDs, len(*tags))
+
+		for i, tag := range *tags {
+			if tagsUUIDs[i], err = uuid.Parse(tag); err != nil {
+				return UpdateMangaInput{}, errors.New("invalid tag ID")
+			}
+		}
+	}
+
+	input := UpdateMangaInput{
 		ID:             id,
 		Title:          title,
 		SecondaryTitle: secondaryTitle,
@@ -110,7 +127,10 @@ func NewUpdateMangaInput(
 		AgeRestrict:    ageRestrict,
 		ReleaseYear:    releaseYear,
 		PreviewFile:    previewFile,
+		Tags:           &tagsUUIDs,
 	}
+
+	return input, nil
 }
 
 type CreateMangaInput struct {
@@ -122,6 +142,7 @@ type CreateMangaInput struct {
 	AgeRestrict    AgeRestrict
 	ReleaseYear    uint16
 	PreviewFile    UploadFile
+	Tags           uuid.UUIDs
 }
 
 func NewCreateMangaInput(
@@ -133,8 +154,20 @@ func NewCreateMangaInput(
 	ageRestrict AgeRestrict,
 	releaseYear uint16,
 	previewFile UploadFile,
-) CreateMangaInput {
-	return CreateMangaInput{
+	tags []string,
+) (CreateMangaInput, error) {
+	var (
+		tagsUUIDs = make(uuid.UUIDs, len(tags))
+		err       error
+	)
+
+	for i, tag := range tags {
+		if tagsUUIDs[i], err = uuid.Parse(tag); err != nil {
+			return CreateMangaInput{}, errors.New("invalid tag ID")
+		}
+	}
+
+	input := CreateMangaInput{
 		Title:          title,
 		SecondaryTitle: secondaryTitle,
 		Description:    description,
@@ -143,7 +176,10 @@ func NewCreateMangaInput(
 		AgeRestrict:    ageRestrict,
 		ReleaseYear:    releaseYear,
 		PreviewFile:    previewFile,
+		Tags:           tagsUUIDs,
 	}
+
+	return input, nil
 }
 
 type MangaFilters struct {

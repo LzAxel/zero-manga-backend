@@ -44,8 +44,11 @@ type Chapter interface {
 }
 type Tag interface {
 	Create(ctx context.Context, tag models.CreateTagInput) error
+	AddTagToManga(ctx context.Context, mangaID, tagID uuid.UUID) error
+	RemoveTagFromManga(ctx context.Context, mangaID, tagID uuid.UUID) error
 	Update(ctx context.Context, tag models.UpdateTagInput) error
 	GetAll(ctx context.Context) ([]models.Tag, error)
+	GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.Tag, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 type Services struct {
@@ -63,11 +66,12 @@ func New(
 	fileStorage filestorage.FileStorage,
 ) *Services {
 	uploader := uploader.NewUploader(fileStorage)
+	tag := tag.New(repository.Tag, repository.MangaTagRelation)
 	return &Services{
 		User:          user.New(ctx, repository.User),
-		Manga:         manga.New(ctx, repository.Manga, repository.Chapter, uploader),
+		Manga:         manga.New(ctx, repository.Manga, repository.Chapter, uploader, tag),
 		Chapter:       chapter.New(ctx, repository.Chapter, repository.Page, repository.Manga, uploader),
 		Authorization: auth.New(ctx, jwt, repository.User),
-		Tag:           tag.New(repository.Tag),
+		Tag:           tag,
 	}
 }

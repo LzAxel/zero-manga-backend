@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	mangatag "github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/manga-tag"
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/tag"
 
 	"github.com/google/uuid"
@@ -54,20 +55,28 @@ type Tag interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
+type MangaTagRelation interface {
+	GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.MangaTagRelation, error)
+	Create(ctx context.Context, tag models.MangaTagRelation) error
+	Delete(ctx context.Context, tag models.MangaTagRelation) error
+}
+
 type Repository struct {
 	User
 	Manga
 	Chapter
 	Page
 	Tag
+	MangaTagRelation
 }
 
 func New(ctx context.Context, psql postgresql.PostgresqlRepository, logger logger.Logger) *Repository {
 	return &Repository{
-		User:    user.New(ctx, psql.DB),
-		Manga:   manga.New(ctx, psql.DB),
-		Chapter: chapter.New(ctx, psql.DB),
-		Page:    page.New(ctx, psql.DB),
-		Tag:     tag.New(ctx, psql.DB),
+		User:             user.New(ctx, psql.DB),
+		Manga:            manga.New(ctx, psql.DB),
+		Chapter:          chapter.New(ctx, psql.DB),
+		Page:             page.New(ctx, psql.DB),
+		Tag:              tag.New(ctx, psql.DB),
+		MangaTagRelation: mangatag.New(psql.DB),
 	}
 }

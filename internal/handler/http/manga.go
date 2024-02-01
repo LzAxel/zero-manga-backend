@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,7 @@ type createMangaRequest struct {
 	AgeRestrict    uint8                 `form:"age_restrict"`
 	ReleaseYear    uint16                `form:"release_year"`
 	PreviewFile    *multipart.FileHeader `form:"preview_file"`
+	Tags           string                `form:"tags"`
 }
 
 func (h *Handler) createManga(ctx echo.Context) error {
@@ -72,7 +74,12 @@ func (h *Handler) createManga(ctx echo.Context) error {
 			))
 	}
 
-	input := models.NewCreateMangaInput(
+	tags := strings.Split(
+		strings.ReplaceAll(reqInput.Tags, " ", ""),
+		",",
+	)
+
+	input, err := models.NewCreateMangaInput(
 		reqInput.Title,
 		reqInput.SecondaryTitle,
 		reqInput.Description,
@@ -84,7 +91,11 @@ func (h *Handler) createManga(ctx echo.Context) error {
 			Filename: reqInput.PreviewFile.Filename,
 			Data:     fileBytes,
 		},
+		tags,
 	)
+	if err != nil {
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+	}
 
 	err = h.services.Manga.Create(ctx.Request().Context(), input)
 	if err != nil {
@@ -174,6 +185,7 @@ type updateMangaRequest struct {
 	AgeRestrict    *models.AgeRestrict   `form:"age_restrict"`
 	ReleaseYear    *uint16               `form:"release_year"`
 	PreviewFile    *multipart.FileHeader `form:"preview_file"`
+	Tags           *string               `form:"tags"`
 }
 
 func (h *Handler) updateManga(ctx echo.Context) error {
@@ -232,7 +244,16 @@ func (h *Handler) updateManga(ctx echo.Context) error {
 		}
 	}
 
-	input := models.NewUpdateMangaInput(
+	var tags []string
+
+	if reqInput.Tags != nil && *reqInput.Tags != "" {
+		tags = strings.Split(
+			strings.ReplaceAll(*reqInput.Tags, " ", ""),
+			",",
+		)
+	}
+
+	input, err := models.NewUpdateMangaInput(
 		id,
 		reqInput.Title,
 		reqInput.SecondaryTitle,
@@ -242,13 +263,19 @@ func (h *Handler) updateManga(ctx echo.Context) error {
 		reqInput.AgeRestrict,
 		reqInput.ReleaseYear,
 		uploadFile,
+		&tags,
 	)
+	if err != nil {
+		return h.newValidationErrorResponse(ctx, http.StatusBadRequest, err)
+	}
 
 	err = h.services.Manga.Update(ctx.Request().Context(), input)
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrMangaTitleExists):
 			return h.newErrorResponse(ctx, http.StatusConflict, err.Error())
+		case errors.Is(err, models.ErrTagNotFound):
+			return h.newErrorResponse(ctx, http.StatusBadRequest, models.ErrTagNotFound.Error())
 		default:
 			return h.newAppErrorResponse(ctx, err)
 		}
