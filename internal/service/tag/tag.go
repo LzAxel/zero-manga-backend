@@ -40,7 +40,7 @@ func (t *Tag) Create(ctx context.Context, tag models.CreateTagInput) error {
 			return models.ErrTagDuplicated
 		default:
 			return apperror.NewAppError(
-				fmt.Errorf("failed to create tag: %w", err),
+				fmt.Errorf("creating tag: %w", err),
 				"Tag",
 				"Create",
 				nil,
@@ -65,7 +65,7 @@ func (t *Tag) Update(ctx context.Context, tag models.UpdateTagInput) error {
 	err := t.repo.Update(ctx, dto)
 	if err != nil {
 		return apperror.NewAppError(
-			fmt.Errorf("failed to update tag: %w", err),
+			fmt.Errorf("updatig tag: %w", err),
 			"Tag",
 			"Update",
 			nil,
@@ -77,7 +77,7 @@ func (t *Tag) GetAll(ctx context.Context) ([]models.Tag, error) {
 	tags, err := t.repo.GetAll(ctx)
 	if err != nil {
 		return nil, apperror.NewAppError(
-			fmt.Errorf("failed to get tags: %w", err),
+			fmt.Errorf("getting alltags: %w", err),
 			"Tag",
 			"GetAll",
 			nil,
@@ -89,7 +89,7 @@ func (t *Tag) Delete(ctx context.Context, id guuid.UUID) error {
 	err := t.repo.Delete(ctx, id)
 	if err != nil {
 		return apperror.NewAppError(
-			fmt.Errorf("failed to delete tag: %w", err),
+			fmt.Errorf("deleting tag: %w", err),
 			"Tag",
 			"Delete",
 			map[string]any{"tag_id": id},
