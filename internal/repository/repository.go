@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/tag"
 
 	"github.com/google/uuid"
@@ -48,6 +49,7 @@ type Page interface {
 type Tag interface {
 	Create(ctx context.Context, tag models.Tag) error
 	GetAll(ctx context.Context) ([]models.Tag, error)
+	GetByID(ctx context.Context, id uuid.UUID) (models.Tag, error)
 	Update(ctx context.Context, tag models.UpdateTagRecord) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

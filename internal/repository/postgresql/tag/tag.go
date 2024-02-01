@@ -77,6 +77,25 @@ func (t *TagPostresql) GetAll(ctx context.Context) ([]models.Tag, error) {
 	return tags, nil
 }
 
+func (t *TagPostresql) GetByID(ctx context.Context, id uuid.UUID) (models.Tag, error) {
+	query, args, _ := squirrel.
+		Select("*").
+		From(postgresql.TagsTable).
+		Where(squirrel.Eq{"id": id}).
+		ToSql()
+	var tag = models.Tag{}
+	if err := t.db.GetContext(ctx, &tag, query, args...); err != nil {
+		return tag, apperror.NewDBError(
+			err,
+			"Tag",
+			"GetByID",
+			query,
+			args,
+		)
+	}
+	return tag, nil
+}
+
 func (t *TagPostresql) Update(ctx context.Context, tag models.UpdateTagRecord) error {
 	query := squirrel.Update(postgresql.TagsTable)
 
