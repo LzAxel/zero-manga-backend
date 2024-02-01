@@ -10,3 +10,4 @@
 - [ ] Returning `Uploader User` info on fetching chapters (`ID`, `name`, `display_name`)
 - [ ] Add `Tags` for manga
 - [ ] Add `Translators` for manga
+- [ ] Separate Logic validation and Transport validation

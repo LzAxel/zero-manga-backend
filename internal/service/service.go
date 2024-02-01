@@ -12,6 +12,7 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/service/chapter"
 	"github.com/lzaxel/zero-manga-backend/internal/service/grade"
 	"github.com/lzaxel/zero-manga-backend/internal/service/manga"
+	"github.com/lzaxel/zero-manga-backend/internal/service/tag"
 	"github.com/lzaxel/zero-manga-backend/internal/service/uploader"
 	"github.com/lzaxel/zero-manga-backend/internal/service/user"
 )
@@ -49,12 +50,22 @@ type Grade interface {
 	GetAllByUserID(ctx context.Context, pagination models.DBPagination, userID uuid.UUID) ([]grade.GradeWithManga, uint64, error)
 }
 
+type Tag interface {
+	Create(ctx context.Context, tag models.CreateTagInput) error
+	AddTagToManga(ctx context.Context, mangaID, tagID uuid.UUID) error
+	RemoveTagFromManga(ctx context.Context, mangaID, tagID uuid.UUID) error
+	Update(ctx context.Context, tag models.UpdateTagInput) error
+	GetAll(ctx context.Context) ([]models.Tag, error)
+	GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.Tag, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+}
 type Services struct {
 	User
 	Manga
 	Chapter
 	Authorization
 	Grade
+	Tag
 }
 
 func New(
@@ -64,12 +75,15 @@ func New(
 	fileStorage filestorage.FileStorage,
 ) *Services {
 	uploader := uploader.NewUploader(fileStorage)
-	manga := manga.New(repository.Manga, repository.Chapter, repository.Grade, uploader)
+	tag := tag.New(repository.Tag, repository.MangaTagRelation)
+	manga := manga.New(repository.Manga, repository.Chapter, uploader, repository.Grade, tag)
+
 	return &Services{
 		User:          user.New(repository.User),
 		Manga:         manga,
 		Chapter:       chapter.New(repository.Chapter, repository.Page, repository.Manga, uploader),
 		Authorization: auth.New(jwt, repository.User),
 		Grade:         grade.New(repository.Grade, manga),
+		Tag:           tag,
 	}
 }

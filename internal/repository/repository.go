@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 
+	mangatag "github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/manga-tag"
+	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql/tag"
+
 	"github.com/google/uuid"
 	"github.com/lzaxel/zero-manga-backend/internal/logger"
 	"github.com/lzaxel/zero-manga-backend/internal/models"
@@ -53,20 +56,38 @@ type Grade interface {
 	GetAllByUserID(ctx context.Context, pagination models.DBPagination, userID uuid.UUID) ([]models.Grade, uint64, error)
 }
 
+type Tag interface {
+	Create(ctx context.Context, tag models.Tag) error
+	GetAll(ctx context.Context) ([]models.Tag, error)
+	GetByID(ctx context.Context, id uuid.UUID) (models.Tag, error)
+	Update(ctx context.Context, tag models.UpdateTagRecord) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type MangaTagRelation interface {
+	GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.MangaTagRelation, error)
+	Create(ctx context.Context, tag models.MangaTagRelation) error
+	Delete(ctx context.Context, tag models.MangaTagRelation) error
+}
+
 type Repository struct {
 	User
 	Manga
 	Chapter
 	Page
 	Grade
+	Tag
+	MangaTagRelation
 }
 
 func New(psql postgresql.PostgresqlRepository, logger logger.Logger) *Repository {
 	return &Repository{
-		User:    user.New(psql.DB),
-		Manga:   manga.New(psql.DB),
-		Chapter: chapter.New(psql.DB),
-		Page:    page.New(psql.DB),
-		Grade:   grade.New(psql.DB),
+		User:             user.New(psql.DB),
+		Manga:            manga.New(psql.DB),
+		Chapter:          chapter.New(psql.DB),
+		Page:             page.New(psql.DB),
+		Grade:            grade.New(psql.DB),
+		Tag:              tag.New(psql.DB),
+		MangaTagRelation: mangatag.New(psql.DB),
 	}
 }

@@ -93,6 +93,14 @@ func (h *Handler) initRoutes() {
 		grade.GET("/user/:id", h.getGradesByUserID, h.WithPagination())
 		grade.DELETE("/:id", h.deleteGrade)
 	}
+
+	tag := v1.Group("/tag")
+	{
+		tag.POST("", h.createTag, h.Authorized(), h.RequireUserType(models.UserTypeAdmin))
+		tag.GET("", h.getAllTags)
+		tag.PATCH("/:id", h.updateTag, h.Authorized(), h.RequireUserType(models.UserTypeAdmin))
+		tag.DELETE("/:id", h.deleteTag, h.Authorized(), h.RequireUserType(models.UserTypeAdmin))
+	}
 }
 
 func (h *Handler) Stop(ctx context.Context) error {

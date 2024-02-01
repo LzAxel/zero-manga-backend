@@ -12,11 +12,13 @@ import (
 )
 
 const (
-	UsersTable   = "users"
-	MangaTable   = "manga"
-	ChapterTable = "chapter"
-	PageTable    = "page"
-	GradeTable   = "grade"
+	UsersTable     = "users"
+	MangaTable     = "manga"
+	ChapterTable   = "chapter"
+	PageTable      = "page"
+	GradeTable     = "grade"
+	TagsTable      = "tag"
+	MangaTagsTable = "manga_tags"
 )
 
 func GetPgError(err error) *pgconn.PgError {

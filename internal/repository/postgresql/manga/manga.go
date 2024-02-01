@@ -127,9 +127,9 @@ func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPaginat
 		ToSql()
 
 	var count uint64
-	var users = make([]models.Manga, 0)
-	if err := m.db.SelectContext(ctx, &users, queryString, args...); err != nil {
-		return users, count, apperror.NewDBError(
+	var manga = make([]models.Manga, 0)
+	if err := m.db.SelectContext(ctx, &manga, queryString, args...); err != nil {
+		return manga, count, apperror.NewDBError(
 			err,
 			"Manga",
 			"GetAll",
@@ -137,7 +137,7 @@ func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPaginat
 			args,
 		)
 	}
-	// counting users
+	// counting manga
 	query = squirrel.
 		Select("COUNT(*)").
 		From(postgresql.MangaTable)
@@ -147,7 +147,7 @@ func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPaginat
 		ToSql()
 
 	if err := m.db.GetContext(ctx, &count, queryString, args...); err != nil {
-		return users, count, apperror.NewDBError(
+		return manga, count, apperror.NewDBError(
 			err,
 			"Manga",
 			"GetAll",
@@ -156,7 +156,7 @@ func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPaginat
 		)
 	}
 
-	return users, count, nil
+	return manga, count, nil
 }
 
 func queryGetAllFilters(query squirrel.SelectBuilder, filters models.MangaGetAllFilters) squirrel.SelectBuilder {
