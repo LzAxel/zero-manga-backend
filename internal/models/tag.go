@@ -67,11 +67,18 @@ func (input CreateTagInput) Validate() error {
 	return validation.ValidateStruct(&input,
 		validation.Field(&input.Name,
 			validation.Length(3, 30),
+			validation.Required,
 		))
 }
 func (input UpdateTagInput) Validate() error {
+	nameRules := []validation.Rule{
+		validation.Length(3, 30),
+	}
+	if input.Name != nil {
+		nameRules = append(nameRules, validation.Required)
+	}
 	return validation.ValidateStruct(&input,
 		validation.Field(&input.Name,
-			validation.Length(3, 30),
+			nameRules...,
 		))
 }
