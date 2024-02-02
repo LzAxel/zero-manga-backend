@@ -13,17 +13,17 @@ import (
 	"github.com/lzaxel/zero-manga-backend/internal/repository/postgresql"
 )
 
-type MangaPosgresql struct {
+type MangaPostgresql struct {
 	db postgresql.DB
 }
 
-func New(db postgresql.DB) *MangaPosgresql {
-	return &MangaPosgresql{
+func New(db postgresql.DB) *MangaPostgresql {
+	return &MangaPostgresql{
 		db: db,
 	}
 }
 
-func (m *MangaPosgresql) Create(ctx context.Context, manga models.Manga) error {
+func (m *MangaPostgresql) Create(ctx context.Context, manga models.Manga) error {
 	query, args, _ := squirrel.
 		Insert(postgresql.MangaTable).
 		Columns(
@@ -73,7 +73,7 @@ func (m *MangaPosgresql) Create(ctx context.Context, manga models.Manga) error {
 	return nil
 }
 
-func (m *MangaPosgresql) GetOne(ctx context.Context, filters models.MangaFilters) (models.Manga, error) {
+func (m *MangaPostgresql) GetOne(ctx context.Context, filters models.MangaFilters) (models.Manga, error) {
 	query := squirrel.
 		Select("*").
 		From(postgresql.MangaTable)
@@ -114,7 +114,7 @@ func (m *MangaPosgresql) GetOne(ctx context.Context, filters models.MangaFilters
 	return manga, nil
 }
 
-func (m *MangaPosgresql) GetAll(ctx context.Context, pagination models.DBPagination, filters models.MangaGetAllFilters) ([]models.Manga, uint64, error) {
+func (m *MangaPostgresql) GetAll(ctx context.Context, pagination models.DBPagination, filters models.MangaGetAllFilters) ([]models.Manga, uint64, error) {
 	// getting manga
 	query := squirrel.
 		Select("*").
@@ -191,7 +191,7 @@ func queryGetAllFilters(query squirrel.SelectBuilder, filters models.MangaGetAll
 	return query
 }
 
-func (m *MangaPosgresql) Update(ctx context.Context, manga models.UpdateMangaRecord) error {
+func (m *MangaPostgresql) Update(ctx context.Context, manga models.UpdateMangaRecord) error {
 	query := squirrel.Update(postgresql.MangaTable)
 
 	if manga.Title != nil {
@@ -246,7 +246,7 @@ func (m *MangaPosgresql) Update(ctx context.Context, manga models.UpdateMangaRec
 	return nil
 }
 
-func (m *MangaPosgresql) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *MangaPostgresql) Delete(ctx context.Context, id uuid.UUID) error {
 	queryString, args, _ := squirrel.
 		Delete(postgresql.MangaTable).
 		Where(squirrel.Eq{"id": id}).

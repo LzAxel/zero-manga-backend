@@ -52,8 +52,6 @@ type Grade interface {
 
 type Tag interface {
 	Create(ctx context.Context, tag models.CreateTagInput) error
-	AddTagToManga(ctx context.Context, mangaID, tagID uuid.UUID) error
-	RemoveTagFromManga(ctx context.Context, mangaID, tagID uuid.UUID) error
 	Update(ctx context.Context, tag models.UpdateTagInput) error
 	GetAll(ctx context.Context) ([]models.Tag, error)
 	GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.Tag, error)
@@ -75,8 +73,7 @@ func New(
 	fileStorage filestorage.FileStorage,
 ) *Services {
 	uploader := uploader.NewUploader(fileStorage)
-	tag := tag.New(repository.Tag, repository.MangaTagRelation)
-	manga := manga.New(repository.Manga, repository.Chapter, uploader, repository.Grade, tag)
+	manga := manga.New(repository.Manga, repository.Chapter, repository.Grade, repository.Tag, uploader)
 
 	return &Services{
 		User:          user.New(repository.User),
@@ -84,6 +81,6 @@ func New(
 		Chapter:       chapter.New(repository.Chapter, repository.Page, repository.Manga, uploader),
 		Authorization: auth.New(jwt, repository.User),
 		Grade:         grade.New(repository.Grade, manga),
-		Tag:           tag,
+		Tag:           tag.New(repository.Tag),
 	}
 }

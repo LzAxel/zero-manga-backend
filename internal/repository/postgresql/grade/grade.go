@@ -128,7 +128,7 @@ type getInfo struct {
 
 func (p *GradePosgresql) GetInfoByManga(ctx context.Context, mangaID uuid.UUID) (float64, uint64, error) {
 	query, args, _ := squirrel.
-		Select("AVG(grade) as avg_grade, COUNT(*) as count").
+		Select("COALESCE(AVG(grade),0) as avg_grade, COUNT(*) as count").
 		From(postgresql.GradeTable).
 		Where(squirrel.Eq{"manga_id": mangaID}).
 		PlaceholderFormat(squirrel.Dollar).

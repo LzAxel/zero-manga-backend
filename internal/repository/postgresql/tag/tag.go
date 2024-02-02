@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -60,28 +61,6 @@ func (t *TagPostresql) Create(ctx context.Context, tag models.Tag) error {
 	}
 
 	return nil
-}
-
-func (t *TagPostresql) GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.Tag, error) {
-	query, _, _ := squirrel.
-		Select("*").
-		From(postgresql.TagsTable).
-		Where(squirrel.Eq{"manga_id": mangaID}).
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-
-	var tags = make([]models.Tag, 0)
-	if err := t.db.SelectContext(ctx, &tags, query); err != nil {
-		return tags, apperror.NewDBError(
-			err,
-			"Tags",
-			"GetAllByMangaID",
-			query,
-			nil,
-		)
-	}
-
-	return tags, nil
 }
 
 func (t *TagPostresql) GetAll(ctx context.Context) ([]models.Tag, error) {
@@ -188,4 +167,28 @@ func (t *TagPostresql) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (m *TagPostresql) GetAllByMangaID(ctx context.Context, mangaID uuid.UUID) ([]models.Tag, error) {
+	query, args, _ := squirrel.
+		Select("tag.*").
+		From(fmt.Sprintf("%s manga_tag", postgresql.MangaTagsTable)).
+		LeftJoin(fmt.Sprintf("%s tag ON manga_tag.tag_id = tag.id", postgresql.TagsTable)).
+		Where(squirrel.Eq{"manga_id": mangaID}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+
+	var tags = make([]models.Tag, 0)
+	if err := m.db.SelectContext(ctx, &tags, query, args...); err != nil {
+		return tags, apperror.NewDBError(
+			err,
+			"Tag",
+			"GetAllByMangaID",
+			query,
+			args,
+		)
+	}
+
+	return tags, nil
+
 }

@@ -16,14 +16,12 @@ import (
 )
 
 type Tag struct {
-	repo                 repository.Tag
-	mangaTagRelationRepo repository.MangaTagRelation
+	repo repository.Tag
 }
 
-func New(repo repository.Tag, mangaTagRelationRepo repository.MangaTagRelation) *Tag {
+func New(repo repository.Tag) *Tag {
 	return &Tag{
-		repo:                 repo,
-		mangaTagRelationRepo: mangaTagRelationRepo,
+		repo: repo,
 	}
 }
 
@@ -49,29 +47,6 @@ func (t *Tag) Create(ctx context.Context, tag models.CreateTagInput) error {
 			)
 		}
 	}
-	return err
-}
-
-func (t *Tag) AddTagToManga(ctx context.Context, mangaID, tagID guuid.UUID) error {
-	err := t.mangaTagRelationRepo.Create(ctx, models.MangaTagRelation{
-		MangaID: mangaID,
-		TagID:   tagID,
-	})
-
-	if err != nil {
-		switch {
-		case errors.Is(err, models.ErrMangaOrTagNotFound):
-			return models.ErrMangaOrTagNotFound
-		default:
-			return apperror.NewAppError(
-				fmt.Errorf("adding tag to manga: %w", err),
-				"Tag",
-				"AddTagToManga",
-				nil,
-			)
-		}
-	}
-
 	return err
 }
 
@@ -112,7 +87,7 @@ func (t *Tag) GetAll(ctx context.Context) ([]models.Tag, error) {
 }
 
 func (t *Tag) GetAllByMangaID(ctx context.Context, mangaID guuid.UUID) ([]models.Tag, error) {
-	tagRelations, err := t.mangaTagRelationRepo.GetAllByMangaID(ctx, mangaID)
+	tags, err := t.repo.GetAllByMangaID(ctx, mangaID)
 	if err != nil {
 		return nil, apperror.NewAppError(
 			fmt.Errorf("getting all manga tag relations: %w", err),
@@ -120,20 +95,6 @@ func (t *Tag) GetAllByMangaID(ctx context.Context, mangaID guuid.UUID) ([]models
 			"GetAllByMangaID",
 			map[string]any{"manga_id": mangaID},
 		)
-	}
-	tags := make([]models.Tag, len(tagRelations))
-	for i, relation := range tagRelations {
-		tag, err := t.repo.GetByID(ctx, relation.TagID)
-		if err != nil {
-			return nil, apperror.NewAppError(
-				fmt.Errorf("getting tag: %w", err),
-				"Tag",
-				"GetAllByMangaID",
-				map[string]any{"manga_id": mangaID, "tag_id": relation.TagID},
-			)
-		}
-
-		tags[i] = tag
 	}
 
 	return tags, err
@@ -151,20 +112,4 @@ func (t *Tag) Delete(ctx context.Context, id guuid.UUID) error {
 	}
 	return err
 
-}
-
-func (t *Tag) RemoveTagFromManga(ctx context.Context, mangaID, tagID guuid.UUID) error {
-	err := t.mangaTagRelationRepo.Delete(ctx, models.MangaTagRelation{
-		MangaID: mangaID,
-		TagID:   tagID,
-	})
-	if err != nil {
-		return apperror.NewAppError(
-			fmt.Errorf("deleting tag from manga: %w", err),
-			"Tag",
-			"RemoveTagFromManga",
-			map[string]any{"manga_id": mangaID, "tag_id": tagID},
-		)
-	}
-	return err
 }

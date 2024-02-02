@@ -22,34 +22,27 @@ type Uploader interface {
 	DeleteManga(ctx context.Context, mangaID guuid.UUID) error
 }
 
-type TagService interface {
-	GetAllByMangaID(ctx context.Context, mangaID guuid.UUID) ([]models.Tag, error)
-	AddTagToManga(ctx context.Context, mangaID, tagID guuid.UUID) error
-	RemoveTagFromManga(ctx context.Context, mangaID, tagID guuid.UUID) error
-	Delete(ctx context.Context, id guuid.UUID) error
-}
-
 type Manga struct {
 	repo         repository.Manga
 	chaptersRepo repository.Chapter
 	gradeRepo    repository.Grade
+	tagRepo      repository.Tag
 	uploader     Uploader
-	tags         TagService
 }
 
 func New(
 	repository repository.Manga,
 	chaptersRepo repository.Chapter,
-	uploader Uploader,
 	gradeRepo repository.Grade,
-	tags TagService,
+	tagRepo repository.Tag,
+	uploader Uploader,
 ) *Manga {
 	return &Manga{
 		repo:         repository,
 		chaptersRepo: chaptersRepo,
 		gradeRepo:    gradeRepo,
 		uploader:     uploader,
-		tags:         tags,
+		tagRepo:      tagRepo,
 	}
 }
 
@@ -87,19 +80,17 @@ func (m *Manga) Create(ctx context.Context, manga models.CreateMangaInput) error
 
 		return err
 	}
-	for _, tag := range manga.Tags {
-		err = m.tags.AddTagToManga(ctx, dto.ID, tag)
-		if err != nil {
-			return apperror.NewAppError(
-				fmt.Errorf("adding tag to manga: %w", err),
-				"Manga",
-				"Create",
-				map[string]interface{}{
-					"manga_id": dto.ID,
-					"tag_id":   tag,
-				},
-			)
-		}
+	err = m.repo.AddTagsToManga(ctx, dto.ID, manga.Tags...)
+	if err != nil {
+		return apperror.NewAppError(
+			fmt.Errorf("adding tag to manga: %w", err),
+			"Manga",
+			"Create",
+			map[string]interface{}{
+				"manga_id": dto.ID,
+				"tag_ids":  manga.Tags,
+			},
+		)
 	}
 
 	return nil
@@ -128,7 +119,7 @@ func (m *Manga) Update(ctx context.Context, manga models.UpdateMangaInput) error
 	}
 
 	if manga.Tags != nil {
-		existedTags, err := m.tags.GetAllByMangaID(ctx, manga.ID)
+		existedTags, err := m.tagRepo.GetAllByMangaID(ctx, manga.ID)
 		if err != nil {
 			return apperror.NewAppError(
 				fmt.Errorf("getting manga tags: %w", err),
@@ -141,48 +132,56 @@ func (m *Manga) Update(ctx context.Context, manga models.UpdateMangaInput) error
 		}
 
 		// removing tags if not in new tags list
+		var toDeleteTags = make(guuid.UUIDs, 0)
 		for _, existedTag := range existedTags {
 			if !slices.Contains(*manga.Tags, existedTag.ID) {
-				err = m.tags.RemoveTagFromManga(ctx, manga.ID, existedTag.ID)
-				if err != nil {
-					return apperror.NewAppError(
-						fmt.Errorf("deleting tag: %w", err),
-						"Manga",
-						"Update",
-						map[string]interface{}{
-							"manga_id": manga.ID,
-							"tag_id":   existedTag.ID,
-						},
-					)
-				}
+				toDeleteTags = append(toDeleteTags, existedTag.ID)
 			}
 		}
 
+		err = m.repo.RemoveTagsFromManga(ctx, manga.ID, toDeleteTags...)
+		if err != nil {
+			return apperror.NewAppError(
+				fmt.Errorf("deleting tag: %w", err),
+				"Manga",
+				"Update",
+				map[string]interface{}{
+					"manga_id": manga.ID,
+					"tag_ids":  toDeleteTags,
+				},
+			)
+		}
+
 		// adding new tags if not in existed tags
-	toAddLoop:
-		for _, tag := range *manga.Tags {
+		var toAddTags = make(guuid.UUIDs, 0)
+		for _, tagID := range *manga.Tags {
+			var alreadyExists = false
 			for _, existedTag := range existedTags {
-				if tag == existedTag.ID {
-					continue toAddLoop
+				if tagID == existedTag.ID {
+					alreadyExists = true
+					break
 				}
 			}
+			if !alreadyExists {
+				toAddTags = append(toAddTags, tagID)
+			}
+		}
 
-			err = m.tags.AddTagToManga(ctx, manga.ID, tag)
-			if err != nil {
-				switch {
-				case errors.Is(err, models.ErrMangaOrTagNotFound):
-					return models.ErrTagNotFound
-				default:
-					return apperror.NewAppError(
-						fmt.Errorf("adding tag to manga: %w", err),
-						"Manga",
-						"Update",
-						map[string]interface{}{
-							"manga_id": manga.ID,
-							"tag_id":   tag,
-						},
-					)
-				}
+		err = m.repo.AddTagsToManga(ctx, manga.ID, toAddTags...)
+		if err != nil {
+			switch {
+			case errors.Is(err, models.ErrMangaOrTagNotFound):
+				return models.ErrTagNotFound
+			default:
+				return apperror.NewAppError(
+					fmt.Errorf("adding tag to manga: %w", err),
+					"Manga",
+					"Update",
+					map[string]interface{}{
+						"manga_id": manga.ID,
+						"tag_ids":  toAddTags,
+					},
+				)
 			}
 		}
 	}
@@ -242,7 +241,7 @@ func (m *Manga) GetOne(ctx context.Context, filters models.MangaFilters) (models
 		)
 	}
 
-	tags, err := m.tags.GetAllByMangaID(ctx, manga.ID)
+	tags, err := m.tagRepo.GetAllByMangaID(ctx, manga.ID)
 	if err != nil {
 		return models.MangaOutput{}, apperror.NewAppError(
 			fmt.Errorf("getting tags: %w", err),
@@ -312,7 +311,7 @@ func (m *Manga) GetAll(ctx context.Context, pagination models.DBPagination, filt
 			)
 		}
 
-		tags, err := m.tags.GetAllByMangaID(ctx, manga.ID)
+		tags, err := m.tagRepo.GetAllByMangaID(ctx, manga.ID)
 		if err != nil {
 			return []models.MangaOutput{}, 0, apperror.NewAppError(
 				fmt.Errorf("getting tags: %w", err),
